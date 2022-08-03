@@ -1,0 +1,14 @@
+--- #Configuration for creating an atlas from OSM data
+nwCorner:
+  lat: 48.323 #degrees latitude
+  long: 16.183 #degrees longitude
+seCorner:
+  lat: 48.118
+  long: 16.579
+
+sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
+cachePath: cache/osmand-hd
+
+paper:
+  size: a4 #a0-a6
+  orientation: portrait #portrait or landscape
