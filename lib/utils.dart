@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+import 'dart:math' as math;
+
 class Coordinates{
   final double latitude, longitude;
   Coordinates(this.latitude, this.longitude){
@@ -9,6 +12,46 @@ class Coordinates{
   @override
   String toString(){
     return "lat: $latitude, long: $longitude";
+  }
+
+  TileCoordinates toTileCoordinates(int zoom){
+    final x = ((longitude + 180)/360 * math.pow(2, zoom)).floor();
+    final y = (
+      (
+        1
+        -
+        math.log(
+          math.tan(latitude*math.pi/180) + 1 / math.cos(latitude*math.pi/180)
+        )
+        /
+        math.pi
+      )
+      *
+      math.pow(2, zoom-1)
+    ).floor();
+    return TileCoordinates(x, y, zoom);
+  }
+}
+
+class TileCoordinates{
+  final int x,y,z;
+  TileCoordinates(this.x,this.y,this.z);
+
+  //Coordinates of upper left / north west corner
+  Coordinates toStandardCoordinates(){
+    final longitude = x*360/math.pow(2, z) - 180;
+    final latitude = math.atan(_sinh(math.pi-2*math.pi*y/math.pow(2, z))) * 180/math.pi;
+    return Coordinates(latitude, longitude);
+  }
+
+  //size in meters
+  double get tileSize{
+    final equator = 40075016.686; //m
+    return equator/math.pow(2, z)*math.cos(toStandardCoordinates().latitude*math.pi/180);
+  }
+
+  double _sinh(double x){
+    return (math.exp(x) - math.exp(-x))/2;
   }
 }
 
@@ -38,4 +81,10 @@ enum PaperSize{
 
 enum PaperOrientation{
   portrait, landscape
+}
+
+class Tile{
+  final Uint8List bytes;
+  final TileCoordinates tileCoordinates;
+  Tile(this.tileCoordinates, this.bytes);
 }

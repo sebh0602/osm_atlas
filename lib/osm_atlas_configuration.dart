@@ -1,7 +1,7 @@
 import 'package:osm_atlas/utils.dart';
 import 'package:osm_atlas/tile_provider.dart';
 
-class OsmAtlasConfiguration{
+class AtlasConfiguration{
   //Vienna as default location
   Coordinates nwCorner = Coordinates(48.323, 16.183);
   Coordinates seCorner = Coordinates(48.118, 16.579);
@@ -14,9 +14,16 @@ class OsmAtlasConfiguration{
 
   TileProvider? _tileProvider;
 
-  void createTileProvider(){
-    _tileProvider = TileProvider(sourceURL, cachePath);
+  //I am using this complicated construction, because the sourceURL and cachePath may not be known during construction
+  TileProvider get tileProvider{
+    return _tileProvider ?? _createTileProvider();
   }
+
+  TileProvider _createTileProvider(){
+    _tileProvider = TileProvider(this);
+    return _tileProvider!;
+  }
+
 
   void importYamlConfiguration(dynamic yamlMap){
     for (MapEntry entry in yamlMap.entries){

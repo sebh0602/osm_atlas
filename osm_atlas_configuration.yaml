@@ -7,7 +7,7 @@ seCorner:
   long: 16.579
 
 sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
-cachePath: cache/osmand-hd
+cachePath: cache
 
 paper:
   size: a4 #a0-a6
