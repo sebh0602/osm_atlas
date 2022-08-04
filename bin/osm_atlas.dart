@@ -4,7 +4,6 @@ import 'package:yaml/yaml.dart';
 
 import 'package:osm_atlas/osm_atlas_configuration.dart';
 import 'package:osm_atlas/atlas_builder.dart';
-import 'package:osm_atlas/utils.dart';
 
 void main(List<String> arguments) {
   //read configuration

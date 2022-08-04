@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
+import 'package:image/image.dart' as img_lib;
+import 'package:osm_atlas/osm_atlas_configuration.dart';
 
 class Coordinates{
   final double latitude, longitude;
@@ -50,15 +53,47 @@ class TileCoordinates{
     return equator/math.pow(2, z)*math.cos(toStandardCoordinates().latitude*math.pi/180);
   }
 
+  Boundary get boundary{
+    final neighbour = TileCoordinates(x+1, y+1, z);
+    final nwCorner = toStandardCoordinates();
+    final seCorner = neighbour.toStandardCoordinates();
+    return Boundary(nwCorner.latitude, seCorner.latitude, seCorner.longitude, nwCorner.longitude);
+  }
+
+  PixelCoordinates getPixelCoordinates(Coordinates coords, int size){
+    if (!boundary.contains(coords)){
+      throw Exception("Coordinates not in boundary!");
+    }
+    final x = (coords.longitude-boundary.west)/boundary.degWidth;
+    final y = (boundary.north-coords.latitude)/boundary.degHeight;
+    return PixelCoordinates((x*size).floor(), (y*size).floor());
+  }
+
   double _sinh(double x){
     return (math.exp(x) - math.exp(-x))/2;
+  }
+}
+
+class PixelCoordinates{
+  final int x,y;
+  PixelCoordinates(this.x,this.y);
+
+  @override
+  String toString(){
+    return "x: $x, y: $y";
   }
 }
 
 class Tile{
   final Uint8List bytes;
   final TileCoordinates tileCoordinates;
-  Tile(this.tileCoordinates, this.bytes);
+  img_lib.Image? image;
+  
+  Tile(this.tileCoordinates, this.bytes){
+    image = img_lib.decodePng(bytes);
+    
+  }
+
 }
 
 class Boundary{
@@ -78,11 +113,19 @@ class Boundary{
     return equator*widthDeg/360*math.cos(0.5*(north+south)*math.pi/180);
   }
 
+  double get degWidth{
+    return east-west;
+  }
+
   //in meters
   double get height{
     final meridian = 20003930; //m
     final heightDeg = north-south;
     return meridian*heightDeg/180;
+  }
+
+  double get degHeight{
+    return north-south;
   }
 
   Coordinates get center{
@@ -109,15 +152,55 @@ class Boundary{
     var newWest = west+pageWidthDeg*x;
     return Boundary(newNorth, newSouth, newEast, newWest);
   }
+
+  bool contains(Coordinates coords){
+    if (coords.latitude > north || coords.latitude < south){
+      return false;
+    } else if (coords.longitude > east || coords.longitude < west){
+      return false;
+    } else{
+      return true;
+    }
+  }
 }
 
 class Page{
   final int pageNumber, xCoordinate, yCoordinate;
   final Boundary boundary;
-  Page(this.pageNumber,this.xCoordinate,this.yCoordinate,this.boundary);
+  final AtlasConfiguration config;
+  int? _tileSize;
+  Page(this.pageNumber,this.xCoordinate,this.yCoordinate,this.boundary,this.config);
 
   Future<void> build() async{
-    
+    final nwCorner = Coordinates(boundary.north, boundary.west).toTileCoordinates(config.zoomLevel);
+    final seCorner = Coordinates(boundary.south, boundary.east).toTileCoordinates(config.zoomLevel);
+    final xTiles = seCorner.x-nwCorner.x+1;
+    final yTiles = seCorner.y-nwCorner.y+1;
+
+    var sample = await config.tileProvider.getTileTC(nwCorner);
+    if (sample.image == null){
+      throw Exception("Image is null!");
+    }
+    _tileSize = sample.image!.width;
+    final pageImageWidth = _tileSize!*xTiles;
+    final pageImageHeight = _tileSize!*yTiles;
+    var pageImage = img_lib.Image(pageImageWidth,pageImageHeight);
+    for (int x = 0; x<xTiles; x++){
+      for (int y = 0; y<yTiles; y++){
+        var tile = await config.tileProvider.getTileTC(TileCoordinates(nwCorner.x+x, nwCorner.y+y, config.zoomLevel));
+        if (tile.image == null){
+          throw Error();
+        }
+        pageImage = img_lib.copyInto(pageImage, tile.image!, dstX: _tileSize!*x, dstY: _tileSize!*y);
+      }
+    }
+    final topLeftPixel = nwCorner.getPixelCoordinates(Coordinates(boundary.north, boundary.west), _tileSize!);
+    final bottomRightPixel = seCorner.getPixelCoordinates(Coordinates(boundary.south, boundary.east), _tileSize!);
+    pageImage = img_lib.copyCrop(pageImage, topLeftPixel.x, topLeftPixel.y, _tileSize!*(xTiles-1) + bottomRightPixel.x-topLeftPixel.x, _tileSize!*(yTiles-1) +bottomRightPixel.y-topLeftPixel.y);
+    final bytes = img_lib.encodePng(pageImage);
+    final path = "pages/$pageNumber.png";
+    await File(path).create(recursive: true);
+	  await File(path).writeAsBytes(bytes);
   }
 }
 

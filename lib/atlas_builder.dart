@@ -28,12 +28,12 @@ class AtlasBuilder{
     //creating page objects
     int pageCount = 0;
     var pages = List<Page?>.filled(_xPages!*_yPages!, null);
-    final xPageStretch = config.paper.overlap/config.paper.nonOverlappingWidth;
-    final yPageStretch = config.paper.overlap/config.paper.nonOverlappingHeight;
+    final xPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingWidth;
+    final yPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingHeight;
     for (int yPage = 0; yPage<_yPages!; yPage++){
       for (int xPage = 0; xPage<_xPages!; xPage++){
         var pageBoundary = adjustedBoundaryWithoutOverlap.section(xPage, _xPages!, yPage, _yPages!);
-        pages[pageCount++] = Page(pageCount, xPage, yPage, pageBoundary.stretch(xPageStretch, yPageStretch));
+        pages[pageCount++] = Page(pageCount, xPage, yPage, pageBoundary.stretch(xPageStretch, yPageStretch),config);
       }
     }
 
