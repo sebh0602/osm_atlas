@@ -33,7 +33,6 @@ void main(List<String> arguments) {
   }
 
   AtlasBuilder(config).build();
-  
 }
 
 void printUsage(){

@@ -3,11 +3,11 @@ import 'package:osm_atlas/tile_provider.dart';
 
 class AtlasConfiguration{
   //Vienna as default location
-  Coordinates nwCorner = Coordinates(48.323, 16.183);
-  Coordinates seCorner = Coordinates(48.118, 16.579);
+  Boundary boundary = Boundary(48.323, 48.118, 16.579, 16.183);
 
-  Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait);
+  Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait,5,15);
   int zoomLevel = 15;
+  int scale = 50000;
   String sourceURL = "https://tile.osmand.net/hd/{z}/{x}/{y}.png";
   String cachePath = "cache";
   String outputPath = "output";
@@ -24,29 +24,30 @@ class AtlasConfiguration{
     return _tileProvider!;
   }
 
+  double get mapWidth{ //in mm, ideal size without adjustments
+    return boundary.width/scale*1000;
+  }
+
+  double get mapHeight{ //in mm
+    return boundary.height/scale*1000;
+  }
 
   void importYamlConfiguration(dynamic yamlMap){
     for (MapEntry entry in yamlMap.entries){
       switch (entry.key){
-        case "nwCorner":
-          if (!entry.value.keys.contains("lat") || !entry.value.keys.contains("long")){
-            print("WARNING: Incomplete coordinates for 'nwCorner'! Ignoring property.");
+        case "boundary":
+          if (!entry.value.keys.contains("north") || !entry.value.keys.contains("south") || !entry.value.keys.contains("east") || !entry.value.keys.contains("west")){
+            print("WARNING: Incomplete coordinates for 'boundary'! You need to specify North/South/East/West. Ignoring property.");
             continue;
           } else {
-            nwCorner = Coordinates(entry.value["lat"], entry.value["long"]);
-          }
-          break;
-        case "seCorner":
-          if (!entry.value.keys.contains("lat") || !entry.value.keys.contains("long")){
-            print("WARNING: Incomplete coordinates for 'seCorner'! Ignoring property.");
-            continue;
-          } else {
-            seCorner = Coordinates(entry.value["lat"], entry.value["long"]);
+            boundary = Boundary(entry.value["north"], entry.value["south"],entry.value["east"], entry.value["west"]);
           }
           break;
         case "paper":
           var size = paper.size;
           var orientation = paper.orientation;
+          var margin = paper.margin;
+          var overlap = paper.overlap;
           if (entry.value.keys.contains("size")){
             var s = entry.value["size"];
             switch (s){
@@ -81,10 +82,19 @@ class AtlasConfiguration{
               orientation = PaperOrientation.landscape;
             }
           }
-          paper = Paper(size, orientation);
+          if (entry.value.keys.contains("margin")){
+            margin = entry.value["margin"];
+          }
+          if (entry.value.keys.contains("overlap")){
+            margin = entry.value["overlap"];
+          }
+          paper = Paper(size, orientation, margin, overlap);
           break;
         case "zoomLevel":
           zoomLevel = entry.value;
+          break;
+        case "scale":
+          scale = entry.value;
           break;
         case "sourceURL":
           sourceURL = entry.value;

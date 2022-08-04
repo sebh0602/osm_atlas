@@ -4,8 +4,8 @@ import 'dart:math' as math;
 class Coordinates{
   final double latitude, longitude;
   Coordinates(this.latitude, this.longitude){
-    if (latitude.abs() > 90 || longitude.abs() > 180){
-      throw ArgumentError("Latitude ($latitude) and longitude ($longitude) must be in [-90;90] and [-180;180] respectively!");
+    if (latitude.abs() > 85 || longitude.abs() > 180){
+      throw ArgumentError("Latitude ($latitude) and longitude ($longitude) must be in [-85;85] and [-180;180] respectively!");
     }
   }
 
@@ -55,11 +55,110 @@ class TileCoordinates{
   }
 }
 
+class Tile{
+  final Uint8List bytes;
+  final TileCoordinates tileCoordinates;
+  Tile(this.tileCoordinates, this.bytes);
+}
+
+class Boundary{
+  final double north, south, east, west;
+  Boundary(this.north,this.south,this.east,this.west){
+    if (north.abs() > 85 || south.abs()>85 || east.abs() > 180 || west.abs() > 180){
+      throw ArgumentError("Latitude ($north/$south) and longitude ($east/$west) must be in [-85;85] and [-180;180] respectively!");
+    } else if (north<south || east<west){
+      throw ArgumentError("You mixed up North/South or East/West!");
+    }
+  }
+
+  //in meters
+  double get width{
+    final equator = 40075016.686; //m
+    final widthDeg = east-west;
+    return equator*widthDeg/360*math.cos(0.5*(north+south)*math.pi/180);
+  }
+
+  //in meters
+  double get height{
+    final meridian = 20003930; //m
+    final heightDeg = north-south;
+    return meridian*heightDeg/180;
+  }
+
+  Coordinates get center{
+    return Coordinates((north+south)/2, (east+west)/2);
+  }
+
+  Boundary stretch(double x, double y){
+    var newNorth = (north - center.latitude)*y + center.latitude;
+    var newSouth = (south - center.latitude)*y + center.latitude;
+    var newEast = (east - center.longitude)*x + center.longitude;
+    var newWest = (west - center.longitude)*x + center.longitude;
+    return Boundary(newNorth, newSouth, newEast, newWest);
+  }
+
+  Boundary section(int x, int xCount, int y, int yCount){
+    final heightDeg = north-south;
+    final widthDeg = east-west;
+    final pageHeightDeg = heightDeg/yCount;
+    final pageWidthDeg = widthDeg/xCount;
+    
+    var newNorth = north-pageHeightDeg*y;
+    var newSouth = north-pageHeightDeg*(y+1);
+    var newEast = west+pageWidthDeg*(x+1);
+    var newWest = west+pageWidthDeg*x;
+    return Boundary(newNorth, newSouth, newEast, newWest);
+  }
+}
+
+class Page{
+  final int pageNumber, xCoordinate, yCoordinate;
+  final Boundary boundary;
+  Page(this.pageNumber,this.xCoordinate,this.yCoordinate,this.boundary);
+
+  Future<void> build() async{
+    
+  }
+}
+
 class Paper{
   final PaperSize size;
   final PaperOrientation orientation;
+  final int margin, overlap;
 
-  Paper(this.size, this.orientation);
+  Paper(this.size, this.orientation, this.margin, this.overlap);
+
+  int get width{
+    if (orientation == PaperOrientation.landscape){
+      return size.longSide;
+    } else {
+      return size.shortSide;
+    }
+  }
+
+  int get printableWidth{
+    return width - 2*margin;
+  }
+
+  int get nonOverlappingWidth{
+    return printableWidth - 2*overlap;
+  }
+
+  int get height{
+    if (orientation == PaperOrientation.landscape){
+      return size.shortSide;
+    } else {
+      return size.longSide;
+    }
+  }
+
+  int get printableHeight{
+    return height - 2*margin;
+  }
+
+  int get nonOverlappingHeight{
+    return printableHeight - 2*overlap;
+  }
 }
 
 enum PaperSize{
@@ -81,10 +180,4 @@ enum PaperSize{
 
 enum PaperOrientation{
   portrait, landscape
-}
-
-class Tile{
-  final Uint8List bytes;
-  final TileCoordinates tileCoordinates;
-  Tile(this.tileCoordinates, this.bytes);
 }

@@ -1,10 +1,11 @@
 --- #Configuration for creating an atlas from OSM data
-nwCorner:
-  lat: 48.323 #degrees latitude
-  long: 16.183 #degrees longitude
-seCorner:
-  lat: 48.118
-  long: 16.579
+boundary:
+  north: 48.323 #degrees latitude
+  south: 48.118
+  east: 16.579 #degrees longitude
+  west: 16.183
+zoomLevel: 12
+scale: 50000 #scale: x is a scale of 1/x
 
 sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
 cachePath: cache
@@ -12,3 +13,5 @@ cachePath: cache
 paper:
   size: a4 #a0-a6
   orientation: portrait #portrait or landscape
+  margin: 5 #Empty space at edge of page (in mm)
+  overlap: 15 #in mm
