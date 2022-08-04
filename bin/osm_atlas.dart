@@ -6,6 +6,7 @@ import 'package:osm_atlas/osm_atlas_configuration.dart';
 import 'package:osm_atlas/atlas_builder.dart';
 
 void main(List<String> arguments) {
+  print("Configuring...");
   //read configuration
   if (arguments.length > 1){
     printUsage();

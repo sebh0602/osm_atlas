@@ -2,6 +2,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'package:image/image.dart' as img_lib;
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:osm_atlas/osm_atlas_configuration.dart';
 
 class Coordinates{
@@ -168,10 +170,27 @@ class Page{
   final int pageNumber, xCoordinate, yCoordinate;
   final Boundary boundary;
   final AtlasConfiguration config;
+  final PDFDocument pdf;
   int? _tileSize;
-  Page(this.pageNumber,this.xCoordinate,this.yCoordinate,this.boundary,this.config);
+  img_lib.Image? _pageImage;
+  Page(this.pageNumber,this.xCoordinate,this.yCoordinate,this.boundary,this.config,this.pdf);
 
   Future<void> build() async{
+    _pageImage = await createPageImage();
+
+    final page = pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      build: (pw.Context context) {
+        return pw.Center(
+          child: pw.Text("Page Nr. $pageNumber"),
+        ); // Center
+      }
+    );
+
+    pdf.addPage(page, pageNumber);
+  }
+
+  Future<img_lib.Image> createPageImage() async{
     final nwCorner = Coordinates(boundary.north, boundary.west).toTileCoordinates(config.zoomLevel);
     final seCorner = Coordinates(boundary.south, boundary.east).toTileCoordinates(config.zoomLevel);
     final xTiles = seCorner.x-nwCorner.x+1;
@@ -197,10 +216,39 @@ class Page{
     final topLeftPixel = nwCorner.getPixelCoordinates(Coordinates(boundary.north, boundary.west), _tileSize!);
     final bottomRightPixel = seCorner.getPixelCoordinates(Coordinates(boundary.south, boundary.east), _tileSize!);
     pageImage = img_lib.copyCrop(pageImage, topLeftPixel.x, topLeftPixel.y, _tileSize!*(xTiles-1) + bottomRightPixel.x-topLeftPixel.x, _tileSize!*(yTiles-1) +bottomRightPixel.y-topLeftPixel.y);
-    final bytes = img_lib.encodePng(pageImage);
-    final path = "pages/$pageNumber.png";
-    await File(path).create(recursive: true);
-	  await File(path).writeAsBytes(bytes);
+    return pageImage;
+    //final bytes = img_lib.encodePng(pageImage);
+    //final path = "pages/$pageNumber.png";
+    //await File(path).create(recursive: true);
+	  //await File(path).writeAsBytes(bytes);
+  }
+}
+
+class PDFDocument{
+  final pdf = pw.Document();
+  final List<pw.Page?> pages;
+  final int documentLength;
+  final AtlasConfiguration config;
+  var _addedPages = 0;
+  PDFDocument(this.pages,this.documentLength,this.config);
+
+  void addPage(pw.Page page, int number){
+    pages[number-1] = page;
+    _addedPages++;
+    if (_addedPages == documentLength){
+      _createDocument();
+    }
+  }
+
+  void _createDocument() async{
+    print("Saving pdf...");
+    for (int i = 0; i<documentLength; i++){
+      if (pages[i] != null){
+        pdf.addPage(pages[i]!);
+      }
+    }
+    final file = File("${config.outputPath}/atlas.pdf");
+    await file.writeAsBytes(await pdf.save());
   }
 }
 

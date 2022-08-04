@@ -1,3 +1,6 @@
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
 import 'package:osm_atlas/utils.dart';
 import 'package:osm_atlas/tile_provider.dart';
 

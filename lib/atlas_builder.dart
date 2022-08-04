@@ -1,3 +1,6 @@
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
 import 'package:osm_atlas/osm_atlas_configuration.dart';
 import 'package:osm_atlas/utils.dart';
 
@@ -12,6 +15,7 @@ class AtlasBuilder{
   AtlasBuilder(this.config);
 
   void build(){
+    print("Calculating...");
     //making sure the pages fit well
     _xPages = ((config.mapWidth-2*config.paper.overlap)/config.paper.nonOverlappingWidth).ceil();
     _yPages = ((config.mapHeight-2*config.paper.overlap)/config.paper.nonOverlappingHeight).ceil();
@@ -28,14 +32,20 @@ class AtlasBuilder{
     //creating page objects
     int pageCount = 0;
     var pages = List<Page?>.filled(_xPages!*_yPages!, null);
+    var pdfPages = List<pw.Page?>.filled(_xPages!*_yPages!, null);
+
+    final document = PDFDocument(pdfPages, _xPages!*_yPages!, config);
+
     final xPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingWidth;
     final yPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingHeight;
     for (int yPage = 0; yPage<_yPages!; yPage++){
       for (int xPage = 0; xPage<_xPages!; xPage++){
         var pageBoundary = adjustedBoundaryWithoutOverlap.section(xPage, _xPages!, yPage, _yPages!);
-        pages[pageCount++] = Page(pageCount, xPage, yPage, pageBoundary.stretch(xPageStretch, yPageStretch),config);
+        pages[pageCount++] = Page(pageCount, xPage, yPage, pageBoundary.stretch(xPageStretch, yPageStretch),config,document);
       }
     }
+
+    print("(Down-)loading tiles...");
 
     //building pages
     for (Page? p in pages){
