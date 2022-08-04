@@ -1,8 +1,8 @@
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import 'package:osm_atlas/osm_atlas_configuration.dart';
-import 'package:osm_atlas/utils.dart';
+import 'package:osm_atlas/coordinates.dart';
+import 'package:osm_atlas/pdf_utils.dart';
 
 class AtlasBuilder{
   final AtlasConfiguration config;
