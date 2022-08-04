@@ -7,6 +7,8 @@ class AtlasConfiguration{
   Boundary boundary = Boundary(48.323, 48.118, 16.579, 16.183);
 
   Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait,5,5);
+  int pageNumberOffset = 0;
+  String fontSource = "C:/Windows/Fonts/seguisb.ttf";
   int zoomLevel = 15;
   int scale = 50000;
   String sourceURL = "https://tile.osmand.net/hd/{z}/{x}/{y}.png";
@@ -87,7 +89,7 @@ class AtlasConfiguration{
             margin = entry.value["margin"];
           }
           if (entry.value.keys.contains("overlap")){
-            margin = (entry.value["overlap"]/2).floor();
+            overlap = (entry.value["overlap"]/2).floor();
             //externally, overlap is the non-exclusive part of the page.
             //Internally, overlap is added to the page after the fact. To avoid confusion due to overlap being present on both pages, it is halved here.
           }

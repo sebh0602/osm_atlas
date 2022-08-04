@@ -147,3 +147,7 @@ class Boundary{
     }
   }
 }
+
+enum Direction{
+  left,right,top,bottom
+}

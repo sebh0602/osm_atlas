@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:yaml/yaml.dart';
 
-import 'package:osm_atlas/osm_atlas_configuration.dart';
+import 'package:osm_atlas/atlas_configuration.dart';
 import 'package:osm_atlas/atlas_builder.dart';
 
 void main(List<String> arguments) {

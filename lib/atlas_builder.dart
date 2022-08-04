@@ -1,6 +1,6 @@
 import 'package:pdf/widgets.dart' as pw;
 
-import 'package:osm_atlas/osm_atlas_configuration.dart';
+import 'package:osm_atlas/atlas_configuration.dart';
 import 'package:osm_atlas/coordinates.dart';
 import 'package:osm_atlas/pdf_utils.dart';
 
@@ -41,11 +41,12 @@ class AtlasBuilder{
     for (int yPage = 0; yPage<_yPages!; yPage++){
       for (int xPage = 0; xPage<_xPages!; xPage++){
         var pageBoundary = adjustedBoundaryWithoutOverlap.section(xPage, _xPages!, yPage, _yPages!);
-        pages[pageCount++] = Page(pageCount, xPage, yPage, pageBoundary.stretch(xPageStretch, yPageStretch),config,document);
+        var pP = PagePosition(_xPages!, _yPages!, xPage, yPage, config);
+        pages[pageCount++] = Page(pageCount, pP, pageBoundary.stretch(xPageStretch, yPageStretch),config,document);
       }
     }
 
-    print("(Down-)loading tiles...");
+    print("(Down-)loading and composing tiles...");
 
     //building pages
     for (Page? p in pages){

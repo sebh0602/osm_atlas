@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
-import 'package:osm_atlas/osm_atlas_configuration.dart';
+import 'package:osm_atlas/atlas_configuration.dart';
 import 'package:osm_atlas/utils.dart';
 import 'package:osm_atlas/coordinates.dart';
 

@@ -2,34 +2,117 @@ import 'dart:io';
 import 'package:image/image.dart' as img_lib;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:osm_atlas/osm_atlas_configuration.dart';
+import 'package:osm_atlas/atlas_configuration.dart';
 import 'package:osm_atlas/coordinates.dart';
 
 class Page{
-  final int pageNumber, xCoordinate, yCoordinate;
+  final int pageNumber;
   final Boundary boundary;
   final AtlasConfiguration config;
   final PDFDocument pdf;
+  final PagePosition pagePosition;
+  pw.Font? _font;
   int? _tileSize;
   img_lib.Image? _pageImage;
-  Page(this.pageNumber,this.xCoordinate,this.yCoordinate,this.boundary,this.config,this.pdf);
+  Page(this.pageNumber,this.pagePosition,this.boundary,this.config,this.pdf);
 
   Future<void> build() async{
-    _pageImage = await createPageImage();
+    _pageImage = await _createPageImage();
+    final img =pw.Image(
+      pw.ImageImage(_pageImage!),
+      fit: pw.BoxFit.fill
+      //width: config.paper.printableWidth*Paper.mm,
+      //height: config.paper.printableHeight*Paper.mm
+    );
+
+    final fontFile = File(config.fontSource);
+    if (await fontFile.exists()){
+      _font = pw.Font.ttf((await fontFile.readAsBytes()).buffer.asByteData());
+    } else {
+      print("Warning: Font not found.");
+    }    
 
     final page = pw.Page(
-      pageFormat: PdfPageFormat.a4,
-      build: (pw.Context context) {
-        return pw.Center(
-          child: pw.Text("Page Nr. $pageNumber"),
-        ); // Center
-      }
+      pageFormat: config.paper.pdfFormat,
+      orientation: config.paper.orientation.pdfOrientation,
+      //margin: pw.EdgeInsets.all(config.paper.margin * Paper.mm),
+      build:(context) {
+        return pw.Stack(
+          children: [
+            img,
+            //pw.Center(child: img),
+            _getNeighbourLink(Direction.left),
+            _getNeighbourLink(Direction.right),
+            _getNeighbourLink(Direction.top),
+            _getNeighbourLink(Direction.bottom)
+          ]
+        );
+      },
     );
 
     pdf.addPage(page, pageNumber);
   }
 
-  Future<img_lib.Image> createPageImage() async{
+  pw.Widget _getNeighbourLink(Direction dir){
+    final width = 8*Paper.mm;
+    final height = 5*Paper.mm;
+    final neighbourNumber = pagePosition.getNeighbour(dir);
+    if (neighbourNumber == null){
+      return pw.Container(height: 0, width: 0);
+    }
+    
+    var alignment = pw.Alignment.center;
+    double? left,right,top,bottom;
+    switch (dir){
+      case Direction.left:
+        left = 0;
+        bottom = 50*Paper.mm;
+        break;
+      case Direction.right:
+        right = 0;
+        top = 50*Paper.mm;
+        break;
+      case Direction.top:
+        top = 0;
+        right = 50*Paper.mm;
+        break;
+      case Direction.bottom:
+        bottom = 0;
+        left = 50*Paper.mm;
+        break;
+    }
+    return pw.Positioned(
+      left: left,
+      top: top,
+      right:right,
+      bottom: bottom,
+      child: pw.UrlLink(
+        destination: "#page=$neighbourNumber",
+        child: pw.Container(
+          decoration: pw.BoxDecoration(
+            //color: PdfColor.fromHex("99EEFF"),
+            color: PdfColor.fromHex("000000"),
+          ),
+          width: width,
+          height: height,
+          alignment: alignment,
+          padding: pw.EdgeInsets.zero,
+          margin: pw.EdgeInsets.zero,
+          child: pw.Text(
+            "0$neighbourNumber",
+            tightBounds: true,
+            style: pw.TextStyle(
+              color: PdfColor.fromHex("FFFFFF"),
+              fontSize: 12,
+              font: _font
+            )
+          )
+        )
+      )
+    );
+  }
+
+  Future<img_lib.Image> _createPageImage() async{
     final nwCorner = Coordinates(boundary.north, boundary.west).toTileCoordinates(config.zoomLevel);
     final seCorner = Coordinates(boundary.south, boundary.east).toTileCoordinates(config.zoomLevel);
     final xTiles = seCorner.x-nwCorner.x+1;
@@ -86,9 +169,62 @@ class PDFDocument{
         pdf.addPage(pages[i]!);
       }
     }
-    final file = File("${config.outputPath}/atlas.pdf");
+    final path = "${config.outputPath}/atlas.pdf";
+    final file = File(path);
     await file.create(recursive: true);
     await file.writeAsBytes(await pdf.save());
+    print("Done! Output saved to $path.");
+  }
+}
+
+class PagePosition{
+  final int width, height, x, y;
+  final AtlasConfiguration config;
+  PagePosition(this.width, this.height, this.x, this.y, this.config);
+
+  int? get topNeighbour{
+    if (y == 0){
+      return null;
+    } else{
+      return width*(y-1) + x+1 + config.pageNumberOffset;
+    }
+  }
+
+  int? get bottomNeighbour{
+    if (y == height-1){
+      return null;
+    } else{
+      return width*(y+1) + x+1 + config.pageNumberOffset;
+    }
+  }
+
+  int? get rightNeighbour{
+    if (x == width-1){
+      return null;
+    } else{
+      return width*y + x+2 + config.pageNumberOffset;
+    }
+  }
+
+  int? get leftNeighbour{
+    if (x == 0){
+      return null;
+    } else{
+      return width*y + x + config.pageNumberOffset;
+    }
+  }
+
+  int? getNeighbour(Direction dir){
+    switch (dir){
+      case Direction.left:
+        return leftNeighbour;
+      case Direction.right:
+        return rightNeighbour;
+      case Direction.top:
+        return topNeighbour;
+      case Direction.bottom:
+        return bottomNeighbour;
+    }
   }
 }
 
@@ -96,6 +232,7 @@ class Paper{
   final PaperSize size;
   final PaperOrientation orientation;
   final int margin, overlap;
+  static final double mm = PdfPageFormat.mm;
 
   Paper(this.size, this.orientation, this.margin, this.overlap);
 
@@ -130,6 +267,14 @@ class Paper{
   int get nonOverlappingHeight{
     return printableHeight - 2*overlap;
   }
+
+  PdfPageFormat get pdfFormat{
+    if (orientation == PaperOrientation.landscape){
+      return PdfPageFormat(size.longSide*mm, size.shortSide*mm, marginAll: margin*mm);
+    } else {
+      return PdfPageFormat(size.shortSide*mm, size.longSide*mm, marginAll: margin*mm);
+    }
+  }
 }
 
 enum PaperSize{
@@ -145,10 +290,14 @@ enum PaperSize{
 
   const PaperSize({
     required this.longSide,
-    required this.shortSide
+    required this.shortSide,
   });
 }
 
 enum PaperOrientation{
-  portrait, landscape
+  portrait(pw.PageOrientation.portrait),
+  landscape(pw.PageOrientation.landscape);
+
+  final pw.PageOrientation pdfOrientation;
+  const PaperOrientation(this.pdfOrientation);
 }
