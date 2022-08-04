@@ -44,7 +44,8 @@ class Page{
             _getNeighbourLink(Direction.left),
             _getNeighbourLink(Direction.right),
             _getNeighbourLink(Direction.top),
-            _getNeighbourLink(Direction.bottom)
+            _getNeighbourLink(Direction.bottom),
+            _getPageNumber()
           ]
         );
       },
@@ -99,7 +100,7 @@ class Page{
           padding: pw.EdgeInsets.zero,
           margin: pw.EdgeInsets.zero,
           child: pw.Text(
-            "0$neighbourNumber",
+            _padNumber(neighbourNumber, pagePosition),
             tightBounds: true,
             style: pw.TextStyle(
               color: PdfColor.fromHex("FFFFFF"),
@@ -110,6 +111,91 @@ class Page{
         )
       )
     );
+  }
+
+  Direction get numberingSide{
+    if (config.dontSwitchPageNumbering){
+      return Direction.right;
+    }
+    if (pageNumber % 2 == 0){
+      if (config.evenLeftNumbering){
+        return Direction.left;
+      } else {
+        return Direction.right;
+      }
+    } else {
+      if (config.evenLeftNumbering){
+        return Direction.right;
+      } else {
+        return Direction.left;
+      }
+    }
+  }
+
+  pw.Widget _getPageNumber(){
+    final width = 8*Paper.mm;
+    final height = 5*Paper.mm;
+    var alignment = pw.Alignment.center;
+
+    double? left,right;
+    final bottom = 0.0;
+    if (numberingSide == Direction.left){
+      left = 0;
+    } else{
+      right = 0;
+    }
+
+    final borderWidth = 1;
+    final radiusSml = pw.Radius.circular(2*Paper.mm);
+    final radiusLrg = pw.Radius.circular(2*Paper.mm + borderWidth);
+    final borderRadiusSml = (numberingSide == Direction.left) ? pw.BorderRadius.only(topRight: radiusSml) : pw.BorderRadius.only(topLeft: radiusSml);
+    final borderRadiusLrg = (numberingSide == Direction.left) ? pw.BorderRadius.only(topRight: radiusLrg) : pw.BorderRadius.only(topLeft: radiusLrg);
+
+    return pw.Positioned(
+      left: left,
+      right:right,
+      bottom: bottom,
+      child: pw.Stack(
+        alignment: (numberingSide == Direction.left) ? pw.Alignment.bottomLeft : pw.Alignment.bottomRight,
+        children: [
+          pw.Container(
+            decoration: pw.BoxDecoration(
+              color: PdfColor.fromHex("000000"),
+              borderRadius: borderRadiusLrg
+            ),
+            width: width + borderWidth,
+            height: height + borderWidth
+          ),
+          pw.Container(
+            decoration: pw.BoxDecoration(
+              //color: PdfColor.fromHex("99EEFF"),
+              color: PdfColor.fromHex("FFFFFF"),
+              borderRadius: borderRadiusSml
+            ),
+            width: width,
+            height: height,
+            alignment: alignment,
+            padding: pw.EdgeInsets.zero,
+            margin: pw.EdgeInsets.zero,
+            child: pw.Text(
+              _padNumber(pageNumber+config.pageNumberOffset, pagePosition),
+              tightBounds: true,
+              style: pw.TextStyle(
+                color: PdfColor.fromHex("000000"),
+                fontSize: 12,
+                font: _font
+              )
+            )
+          )
+        ]
+      )
+    );
+  }
+
+  String _padNumber(int number, PagePosition pP){
+    final maxLen = (pP.width*pP.height).toString().length;
+    final ownLen = number.toString().length;
+    return "0"*(maxLen-ownLen) + number.toString();
   }
 
   Future<img_lib.Image> _createPageImage() async{

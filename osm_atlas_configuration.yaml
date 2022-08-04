@@ -15,3 +15,6 @@ paper:
   orientation: portrait #portrait or landscape
   margin: 0 #Empty space at edge of page (in mm)
   overlap: 8 #How much of the edge should be shared with the next page (in mm)
+
+dontSwitchPageNumbering: false
+pageNumberOffset: 0

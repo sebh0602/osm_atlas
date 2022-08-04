@@ -8,6 +8,8 @@ class AtlasConfiguration{
 
   Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait,5,5);
   int pageNumberOffset = 0;
+  bool evenLeftNumbering = false;
+  bool dontSwitchPageNumbering = false;
   String fontSource = "C:/Windows/Fonts/seguisb.ttf";
   int zoomLevel = 15;
   int scale = 50000;
@@ -109,6 +111,15 @@ class AtlasConfiguration{
           break;
         case "outputPath":
           outputPath = entry.value;
+          break;
+        case "pageNumberOffset":
+          pageNumberOffset = entry.value;
+          break;
+        case "evenLeftNumbering":
+          evenLeftNumbering = entry.value;
+          break;
+        case "dontSwitchPageNumbering":
+          dontSwitchPageNumbering = entry.value;
           break;
         default:
           print("WARNING: Unknown property '${entry.key}'!");
