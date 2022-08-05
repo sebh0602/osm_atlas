@@ -8,9 +8,7 @@ zoomLevel: 15
 overviewZoomLevel: 13
 scale: 20000 #scale: x is a scale of 1/x
 
-#sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png #high dpi
-sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png #german
-#sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png #standard tiles
+
 cachePath: cache
 
 paper:
@@ -25,3 +23,13 @@ pageNumberOffset: 0
 evenLeftNumbering: false
 addBlankPage: false
 omitTitlePage: false
+
+
+
+#Non-retina:
+sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png #standard tiles
+#sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png #german style
+
+#Retina:
+#sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
+#sourceURL: https://tiles.bergfex.at/styles/bergfex-osm/{z}/{x}/{y}@2x.png #bergfex with amenities

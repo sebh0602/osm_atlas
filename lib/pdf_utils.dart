@@ -18,7 +18,7 @@ class Page{
   Page(this.pageNumber,this.pagePosition,this.boundary,this.config,this.pdf);
 
   Future<void> build() async{
-    _pageImage = await createPageImage(boundary,config.zoomLevel,config);
+    _pageImage = await createPageImage(boundary,config.zoomLevel,config,pdf: pdf);
     final img =pw.Image(
       pw.ImageImage(_pageImage!),
       fit: pw.BoxFit.fill
@@ -193,7 +193,7 @@ class Page{
     return "0"*(maxLen-ownLen) + number.toString();
   }
 
-  static Future<img_lib.Image> createPageImage(Boundary boundary, int zoomLevel, AtlasConfiguration config) async{
+  static Future<img_lib.Image> createPageImage(Boundary boundary, int zoomLevel, AtlasConfiguration config,{PDFDocument? pdf}) async{
     final nwCorner = Coordinates(boundary.north, boundary.west).toTileCoordinates(zoomLevel);
     final seCorner = Coordinates(boundary.south, boundary.east).toTileCoordinates(zoomLevel);
     final xTiles = seCorner.x-nwCorner.x+1;
@@ -210,6 +210,7 @@ class Page{
     for (int x = 0; x<xTiles; x++){
       for (int y = 0; y<yTiles; y++){
         var tile = await config.tileProvider.getTileTC(TileCoordinates(nwCorner.x+x, nwCorner.y+y, zoomLevel));
+        pdf?.addDownloadedTile();
         if (tile.image == null){
           throw Error();
         }
@@ -230,12 +231,18 @@ class PDFDocument{
   final Boundary overviewBoundary;
   final AtlasConfiguration config;
   var _addedPages = 0;
+  var _downloadedTiles = 0;
   PDFDocument(this.pages,this.additionalOffset,this.overviewBoundary,this.xPages,this.yPages, this.config);
 
   int get documentLength => xPages*yPages;
 
   void statusUpdate(){
-    stdout.write("Pages completed: $_addedPages/$documentLength\r");
+    stdout.write("Completed pages: $_addedPages/$documentLength, (Down-)loaded tiles: $_downloadedTiles\r");
+  }
+
+  void addDownloadedTile(){
+    _downloadedTiles++;
+    statusUpdate();
   }
 
   void addPage(pw.Page page, int number){
@@ -243,6 +250,7 @@ class PDFDocument{
     _addedPages++;
     statusUpdate();
     if (_addedPages == documentLength){
+      print("");
       _createDocument();
     }
   }

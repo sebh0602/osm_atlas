@@ -27,6 +27,7 @@ class AtlasConfiguration{
   int overviewZoomLevel = 13;
   int scale = 50000;
   String sourceURL = "https://tile.osmand.net/hd/{z}/{x}/{y}.png";
+  String? overlayURL;
   String cachePath = "cache";
 
   String outputPath = "output";
@@ -122,6 +123,9 @@ class AtlasConfiguration{
           break;
         case "sourceURL":
           sourceURL = entry.value;
+          break;
+        case "overlayURL":
+          overlayURL = entry.value;
           break;
         case "cachePath":
           cachePath = entry.value;
