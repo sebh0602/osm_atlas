@@ -234,9 +234,14 @@ class PDFDocument{
 
   int get documentLength => xPages*yPages;
 
+  void statusUpdate(){
+    stdout.write("Pages completed: $_addedPages/$documentLength\r");
+  }
+
   void addPage(pw.Page page, int number){
     pages[number-1] = page;
     _addedPages++;
+    statusUpdate();
     if (_addedPages == documentLength){
       _createDocument();
     }
@@ -311,7 +316,7 @@ class PDFDocument{
             pw.Positioned(
               left: 20*Paper.mm,
               right: 20*Paper.mm,
-              bottom: config.paper.height*0.2*Paper.mm,
+              bottom: config.paper.height*0.1*Paper.mm,
               child: pw.Text(
                 config.innerText,
                 style: pw.TextStyle(
@@ -321,7 +326,7 @@ class PDFDocument{
                 textAlign: pw.TextAlign.center
               )
             )
-            //TODO: Add scale, physical scale, cm/m equivalence, info about this program, creation date
+            //TODO: Add scale, physical scale, cm/m equivalence,
           ]
         );
       },
@@ -331,13 +336,8 @@ class PDFDocument{
   Future<pw.Page> _createOverview() async{
     final stretchedBoundary = overviewBoundary.stretch(1.1, 1.1);
     var overviewImage = await Page.createPageImage(stretchedBoundary,config.overviewZoomLevel, config);
-    //final topLeft = stretchedBoundary.getPixelCoordinates(Coordinates(overviewBoundary.north,overviewBoundary.west), overviewImage.width, overviewImage.height);
-    //final bottomRight = stretchedBoundary.getPixelCoordinates(Coordinates(overviewBoundary.south,overviewBoundary.east), overviewImage.width, overviewImage.height);
-    //overviewImage =  img_lib.drawRect(overviewImage, topLeft.x,topLeft.y,bottomRight.x,bottomRight.y,0x000000FF);
-    //overviewImage = img_lib.drawLine(overviewImage, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, img_lib.Color.fromRgb(0, 0, 0), thickness: math.max(0.005*math.max(overviewImage.width, overviewImage.height),3));
-
+    
     final thickness = math.max(0.003*math.max(overviewImage.width, overviewImage.height),3).floor();
-    //overviewBoundary.draw(overviewImage, stretchedBoundary, img_lib.Color.fromRgb(0, 0, 0), thickness);
     List<int> fontBytes = await File(config.fntFontSource).readAsBytes();
     final font = img_lib.BitmapFont.fromZip(fontBytes);
     font.size = 2;

@@ -65,5 +65,6 @@ class AtlasBuilder{
     for (Page? p in pages){
       p?.build();
     }
+    document.statusUpdate();
   }
 }

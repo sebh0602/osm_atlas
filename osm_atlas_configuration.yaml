@@ -1,14 +1,16 @@
 --- #Configuration for creating an atlas from OSM data
-boundary:
-  north: 48.27 #degrees latitude
-  south: 48.22
-  east: 16.37 #degrees longitude
-  west: 16.25
-zoomLevel: 16
+#boundary:
+#  north: 48.27 #degrees latitude
+#  south: 48.22
+#  east: 16.37 #degrees longitude
+#  west: 16.25
+zoomLevel: 15
 overviewZoomLevel: 13
-scale: 10000 #scale: x is a scale of 1/x
+scale: 20000 #scale: x is a scale of 1/x
 
-sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
+#sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png #high dpi
+sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png #german
+#sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png #standard tiles
 cachePath: cache
 
 paper:
@@ -17,8 +19,9 @@ paper:
   margin: 3 #Empty space at edge of page (in mm)
   overlap: 8 #How much of the edge should be shared with the next page (in mm)
 
+title: Wien
 dontSwitchPageNumbering: false
 pageNumberOffset: 0
-evenLeftNumbering: true
+evenLeftNumbering: false
 addBlankPage: false
-omitTitlePage: true
+omitTitlePage: false

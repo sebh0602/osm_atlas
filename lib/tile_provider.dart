@@ -24,7 +24,7 @@ class TileProvider{
       final bytes = await file.readAsBytes();
       return Tile(tc,bytes);
     } else {
-      final tile = await _getNetworkTile(tc);
+      final tile = await _getNetworkTile(tc,3);
       () async {
         await file.create(recursive: true);
         await file.writeAsBytes(tile.bytes);
@@ -50,15 +50,25 @@ class TileProvider{
     return "${config.cachePath}/$_urlTimeHashCode-${tc.z}-${tc.x}-${tc.y}.png";
   }
 
-  Future<Tile> _getNetworkTile(TileCoordinates tc) async {
+  Future<Tile> _getNetworkTile(TileCoordinates tc,int remainingTries) async {
+    remainingTries--;
     final coordinateUrl = _getRequestUrl(tc);
     final url = Uri.parse(coordinateUrl);
-    final response = await http.get(url);
-    if (response.statusCode == 200){
-      final bytes = response.bodyBytes;
-      return Tile(tc, bytes);
-    } else {
-      throw HttpException("Status code: ${response.statusCode}, header: ${response.headers}");
+    try{
+      final response = await http.get(url);
+      if (response.statusCode == 200){
+        final bytes = response.bodyBytes;
+        return Tile(tc, bytes);
+      } else {
+        if (remainingTries == 0){
+          throw HttpException("Status code: ${response.statusCode}, header: ${response.headers}, url: $coordinateUrl");
+        } else {
+          return _getNetworkTile(tc, remainingTries);
+        }
+      }
+    } catch (e){
+      return _getNetworkTile(tc, remainingTries);
     }
+    
   }
 }
