@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:pdf/widgets.dart' as pw;
 
 import 'package:osm_atlas/atlas_configuration.dart';
@@ -34,7 +36,11 @@ class AtlasBuilder{
     var pages = List<Page?>.filled(_xPages!*_yPages!, null);
     var pdfPages = List<pw.Page?>.filled(_xPages!*_yPages!, null);
 
-    final document = PDFDocument(pdfPages, _xPages!*_yPages!, config);
+    var additionalOffset = 3;
+    if (config.omitTitlePage) additionalOffset--;
+    if (config.omitInnerPage) additionalOffset--;
+    if (config.addBlankPage) additionalOffset++;
+    final document = PDFDocument(pdfPages, additionalOffset, _adjustedBoundary!,_xPages!,_yPages!, config);
 
     final xPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingWidth;
     final yPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingHeight;
@@ -44,6 +50,13 @@ class AtlasBuilder{
         var pP = PagePosition(_xPages!, _yPages!, xPage, yPage, config);
         pages[pageCount++] = Page(pageCount, pP, pageBoundary.stretch(xPageStretch, yPageStretch),config,document);
       }
+    }
+
+    final fontFile = File(config.fontSource);
+    if (fontFile.existsSync()){
+      config.font = pw.Font.ttf((fontFile.readAsBytesSync()).buffer.asByteData());
+    } else {
+      print("Warning: Font not found.");
     }
 
     print("(Down-)loading and composing tiles...");

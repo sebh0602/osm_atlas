@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:image/image.dart' as img_lib;
 
 class Coordinates{
   final double latitude, longitude;
@@ -54,15 +55,6 @@ class TileCoordinates{
     final nwCorner = toStandardCoordinates();
     final seCorner = neighbour.toStandardCoordinates();
     return Boundary(nwCorner.latitude, seCorner.latitude, seCorner.longitude, nwCorner.longitude);
-  }
-
-  PixelCoordinates getPixelCoordinates(Coordinates coords, int size){
-    if (!boundary.contains(coords)){
-      throw Exception("Coordinates not in boundary!");
-    }
-    final x = (coords.longitude-boundary.west)/boundary.degWidth;
-    final y = (boundary.north-coords.latitude)/boundary.degHeight;
-    return PixelCoordinates((x*size).floor(), (y*size).floor());
   }
 
   double _sinh(double x){
@@ -145,6 +137,29 @@ class Boundary{
     } else{
       return true;
     }
+  }
+
+  //gets pixel coordinates of an image with this as a boundary
+  PixelCoordinates getPixelCoordinates(Coordinates coords, int width, int height){
+    if (!contains(coords)){
+      throw Exception("Coordinates not in boundary!");
+    }
+    final x = (coords.longitude-west)/degWidth;
+    final y = (north-coords.latitude)/degHeight;
+    return PixelCoordinates((x*width).floor(), (y*height).floor());
+  }
+
+  img_lib.Image draw(img_lib.Image srcImage, Boundary imgBoundary, int color, int thickness){
+    final topLeft = imgBoundary.getPixelCoordinates(Coordinates(north, west), srcImage.width, srcImage.height);
+    final topRight = imgBoundary.getPixelCoordinates(Coordinates(north, east), srcImage.width, srcImage.height);
+    final bottomLeft = imgBoundary.getPixelCoordinates(Coordinates(south, west), srcImage.width, srcImage.height);
+    final bottomRight = imgBoundary.getPixelCoordinates(Coordinates(south, east), srcImage.width, srcImage.height);
+    final ht = (thickness/2).floor(); //otherwise the corners look strange
+    img_lib.drawLine(srcImage, topLeft.x-ht, topLeft.y, topRight.x+ht, topRight.y, color, thickness: thickness);
+    img_lib.drawLine(srcImage, topRight.x, topRight.y-ht, bottomRight.x, bottomRight.y+ht, color, thickness: thickness);
+    img_lib.drawLine(srcImage, bottomRight.x+ht, bottomRight.y, bottomLeft.x-ht, bottomLeft.y, color, thickness: thickness);
+    img_lib.drawLine(srcImage, bottomLeft.x, bottomLeft.y+ht, topLeft.x, topLeft.y-ht, color, thickness: thickness);
+    return srcImage;
   }
 }
 

@@ -1,3 +1,5 @@
+import 'package:pdf/widgets.dart' as pw;
+
 import 'package:osm_atlas/tile_provider.dart';
 import 'package:osm_atlas/coordinates.dart';
 import 'package:osm_atlas/pdf_utils.dart';
@@ -10,11 +12,23 @@ class AtlasConfiguration{
   int pageNumberOffset = 0;
   bool evenLeftNumbering = false;
   bool dontSwitchPageNumbering = false;
-  String fontSource = "C:/Windows/Fonts/seguisb.ttf";
+  String fontSource = "fonts/roboto.ttf";
+  String fntFontSource = "fonts/roboto.zip";
+  pw.Font? font;
+
+  String title = "Atlas";
+  String subtitle = "Sebastian Hietsch / OpenStreetMap (${DateTime.now().year})";
+  String innerText = "This atlas was created using a program written by Sebastian Hietsch. The map data courtesy of OpenStreetMap.";
+  bool omitTitlePage = false;
+  bool omitInnerPage = false;
+  bool addBlankPage = false;
+
   int zoomLevel = 15;
+  int overviewZoomLevel = 13;
   int scale = 50000;
   String sourceURL = "https://tile.osmand.net/hd/{z}/{x}/{y}.png";
   String cachePath = "cache";
+
   String outputPath = "output";
 
   TileProvider? _tileProvider;
@@ -100,6 +114,9 @@ class AtlasConfiguration{
         case "zoomLevel":
           zoomLevel = entry.value;
           break;
+        case "overviewZoomLevel":
+          overviewZoomLevel = entry.value;
+          break;
         case "scale":
           scale = entry.value;
           break;
@@ -120,6 +137,24 @@ class AtlasConfiguration{
           break;
         case "dontSwitchPageNumbering":
           dontSwitchPageNumbering = entry.value;
+          break;
+        case "title":
+          title = entry.value;
+          break;
+        case "subtitle":
+          subtitle = entry.value;
+          break;
+        case "innerText":
+          innerText = entry.value;
+          break;
+        case "omitTitlePage":
+          omitTitlePage = entry.value;
+          break;
+        case "omitInnerPage":
+          omitInnerPage = entry.value;
+          break;
+        case "addBlankPage":
+          addBlankPage = entry.value;
           break;
         default:
           print("WARNING: Unknown property '${entry.key}'!");

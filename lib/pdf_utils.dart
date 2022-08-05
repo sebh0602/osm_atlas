@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:math' as math;
+
 import 'package:image/image.dart' as img_lib;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+
 import 'package:osm_atlas/atlas_configuration.dart';
 import 'package:osm_atlas/coordinates.dart';
 
@@ -11,26 +14,17 @@ class Page{
   final AtlasConfiguration config;
   final PDFDocument pdf;
   final PagePosition pagePosition;
-  pw.Font? _font;
-  int? _tileSize;
   img_lib.Image? _pageImage;
   Page(this.pageNumber,this.pagePosition,this.boundary,this.config,this.pdf);
 
   Future<void> build() async{
-    _pageImage = await _createPageImage();
+    _pageImage = await createPageImage(boundary,config.zoomLevel,config);
     final img =pw.Image(
       pw.ImageImage(_pageImage!),
       fit: pw.BoxFit.fill
       //width: config.paper.printableWidth*Paper.mm,
       //height: config.paper.printableHeight*Paper.mm
     );
-
-    final fontFile = File(config.fontSource);
-    if (await fontFile.exists()){
-      _font = pw.Font.ttf((await fontFile.readAsBytes()).buffer.asByteData());
-    } else {
-      print("Warning: Font not found.");
-    }    
 
     final page = pw.Page(
       pageFormat: config.paper.pdfFormat,
@@ -57,10 +51,11 @@ class Page{
   pw.Widget _getNeighbourLink(Direction dir){
     final width = 8*Paper.mm;
     final height = 5*Paper.mm;
-    final neighbourNumber = pagePosition.getNeighbour(dir);
+    var neighbourNumber = pagePosition.getNeighbour(dir);
     if (neighbourNumber == null){
       return pw.Container(height: 0, width: 0);
     }
+    neighbourNumber += pdf.additionalOffset;
     
     var alignment = pw.Alignment.center;
     double? left,right,top,bottom;
@@ -104,8 +99,8 @@ class Page{
             tightBounds: true,
             style: pw.TextStyle(
               color: PdfColor.fromHex("FFFFFF"),
-              fontSize: 12,
-              font: _font
+              fontSize: 11,
+              font: config.font
             )
           )
         )
@@ -117,7 +112,7 @@ class Page{
     if (config.dontSwitchPageNumbering){
       return Direction.right;
     }
-    if (pageNumber % 2 == 0){
+    if ((pageNumber + config.pageNumberOffset + pdf.additionalOffset) % 2 == 0){
       if (config.evenLeftNumbering){
         return Direction.left;
       } else {
@@ -178,12 +173,12 @@ class Page{
             padding: pw.EdgeInsets.zero,
             margin: pw.EdgeInsets.zero,
             child: pw.Text(
-              _padNumber(pageNumber+config.pageNumberOffset, pagePosition),
+              _padNumber(pageNumber+config.pageNumberOffset + pdf.additionalOffset, pagePosition),
               tightBounds: true,
               style: pw.TextStyle(
                 color: PdfColor.fromHex("000000"),
-                fontSize: 12,
-                font: _font
+                fontSize: 11,
+                font: config.font
               )
             )
           )
@@ -193,14 +188,14 @@ class Page{
   }
 
   String _padNumber(int number, PagePosition pP){
-    final maxLen = (pP.width*pP.height).toString().length;
+    final maxLen = (pP.width*pP.height+config.pageNumberOffset+pdf.additionalOffset).toString().length;
     final ownLen = number.toString().length;
     return "0"*(maxLen-ownLen) + number.toString();
   }
 
-  Future<img_lib.Image> _createPageImage() async{
-    final nwCorner = Coordinates(boundary.north, boundary.west).toTileCoordinates(config.zoomLevel);
-    final seCorner = Coordinates(boundary.south, boundary.east).toTileCoordinates(config.zoomLevel);
+  static Future<img_lib.Image> createPageImage(Boundary boundary, int zoomLevel, AtlasConfiguration config) async{
+    final nwCorner = Coordinates(boundary.north, boundary.west).toTileCoordinates(zoomLevel);
+    final seCorner = Coordinates(boundary.south, boundary.east).toTileCoordinates(zoomLevel);
     final xTiles = seCorner.x-nwCorner.x+1;
     final yTiles = seCorner.y-nwCorner.y+1;
 
@@ -208,37 +203,36 @@ class Page{
     if (sample.image == null){
       throw Exception("Image is null!");
     }
-    _tileSize = sample.image!.width;
-    final pageImageWidth = _tileSize!*xTiles;
-    final pageImageHeight = _tileSize!*yTiles;
+    final tileSize = sample.image!.width;
+    final pageImageWidth = tileSize*xTiles;
+    final pageImageHeight = tileSize*yTiles;
     var pageImage = img_lib.Image(pageImageWidth,pageImageHeight);
     for (int x = 0; x<xTiles; x++){
       for (int y = 0; y<yTiles; y++){
-        var tile = await config.tileProvider.getTileTC(TileCoordinates(nwCorner.x+x, nwCorner.y+y, config.zoomLevel));
+        var tile = await config.tileProvider.getTileTC(TileCoordinates(nwCorner.x+x, nwCorner.y+y, zoomLevel));
         if (tile.image == null){
           throw Error();
         }
-        pageImage = img_lib.copyInto(pageImage, tile.image!, dstX: _tileSize!*x, dstY: _tileSize!*y);
+        pageImage = img_lib.copyInto(pageImage, tile.image!, dstX: tileSize*x, dstY: tileSize*y);
       }
     }
-    final topLeftPixel = nwCorner.getPixelCoordinates(Coordinates(boundary.north, boundary.west), _tileSize!);
-    final bottomRightPixel = seCorner.getPixelCoordinates(Coordinates(boundary.south, boundary.east), _tileSize!);
-    pageImage = img_lib.copyCrop(pageImage, topLeftPixel.x, topLeftPixel.y, _tileSize!*(xTiles-1) + bottomRightPixel.x-topLeftPixel.x, _tileSize!*(yTiles-1) +bottomRightPixel.y-topLeftPixel.y);
+    final topLeftPixel = nwCorner.boundary.getPixelCoordinates(Coordinates(boundary.north, boundary.west), tileSize, tileSize);
+    final bottomRightPixel = seCorner.boundary.getPixelCoordinates(Coordinates(boundary.south, boundary.east), tileSize, tileSize);
+    pageImage = img_lib.copyCrop(pageImage, topLeftPixel.x, topLeftPixel.y, tileSize*(xTiles-1) + bottomRightPixel.x-topLeftPixel.x, tileSize*(yTiles-1) +bottomRightPixel.y-topLeftPixel.y);
     return pageImage;
-    //final bytes = img_lib.encodePng(pageImage);
-    //final path = "pages/$pageNumber.png";
-    //await File(path).create(recursive: true);
-	  //await File(path).writeAsBytes(bytes);
   }
 }
 
 class PDFDocument{
   final pdf = pw.Document();
   final List<pw.Page?> pages;
-  final int documentLength;
+  final int additionalOffset,xPages,yPages;
+  final Boundary overviewBoundary;
   final AtlasConfiguration config;
   var _addedPages = 0;
-  PDFDocument(this.pages,this.documentLength,this.config);
+  PDFDocument(this.pages,this.additionalOffset,this.overviewBoundary,this.xPages,this.yPages, this.config);
+
+  int get documentLength => xPages*yPages;
 
   void addPage(pw.Page page, int number){
     pages[number-1] = page;
@@ -249,6 +243,12 @@ class PDFDocument{
   }
 
   void _createDocument() async{
+    print("Creating title and overview...");
+    if (!config.omitTitlePage) pdf.addPage(_createTitlePage());
+    if (config.addBlankPage) pdf.addPage(pw.Page(pageFormat: config.paper.pdfFormat, orientation: config.paper.orientation.pdfOrientation, build: (context) => pw.Container(width: 0,height: 0),));
+    pdf.addPage(await _createOverview());
+    if (!config.omitInnerPage) pdf.addPage(_createInnerPage());
+
     print("Saving pdf...");
     for (int i = 0; i<documentLength; i++){
       if (pages[i] != null){
@@ -260,6 +260,118 @@ class PDFDocument{
     await file.create(recursive: true);
     await file.writeAsBytes(await pdf.save());
     print("Done! Output saved to $path.");
+  }
+
+  pw.Page _createTitlePage(){
+    return pw.Page(
+      pageFormat: config.paper.pdfFormat,
+      orientation: config.paper.orientation.pdfOrientation,
+      build: (context) {
+        return pw.Stack(
+          children: [
+            pw.Positioned(
+              left: 10*Paper.mm,
+              right: 10*Paper.mm,
+              top: config.paper.height*0.3*Paper.mm,
+              child: pw.Text(
+                config.title,
+                style: pw.TextStyle(
+                  font: config.font,
+                  fontSize: 28
+                ),
+                textAlign: pw.TextAlign.center
+              )
+            ),
+            pw.Positioned(
+              left: 10*Paper.mm,
+              right: 10*Paper.mm,
+              bottom: 10*Paper.mm,
+              child: pw.Text(
+                config.subtitle,
+                style: pw.TextStyle(
+                  font: config.font,
+                  fontSize: 10
+                ),
+                textAlign: pw.TextAlign.center
+              )
+            )
+          ]
+        );
+      },
+    );
+  }
+
+  pw.Page _createInnerPage(){
+    return pw.Page(
+      pageFormat: config.paper.pdfFormat,
+      orientation: config.paper.orientation.pdfOrientation,
+      build: (context) {
+        return pw.Stack(
+          children: [
+            pw.Positioned(
+              left: 20*Paper.mm,
+              right: 20*Paper.mm,
+              bottom: config.paper.height*0.2*Paper.mm,
+              child: pw.Text(
+                config.innerText,
+                style: pw.TextStyle(
+                  font: config.font,
+                  fontSize: 10
+                ),
+                textAlign: pw.TextAlign.center
+              )
+            )
+            //TODO: Add scale, physical scale, cm/m equivalence, info about this program, creation date
+          ]
+        );
+      },
+    );
+  }
+
+  Future<pw.Page> _createOverview() async{
+    final stretchedBoundary = overviewBoundary.stretch(1.1, 1.1);
+    var overviewImage = await Page.createPageImage(stretchedBoundary,config.overviewZoomLevel, config);
+    //final topLeft = stretchedBoundary.getPixelCoordinates(Coordinates(overviewBoundary.north,overviewBoundary.west), overviewImage.width, overviewImage.height);
+    //final bottomRight = stretchedBoundary.getPixelCoordinates(Coordinates(overviewBoundary.south,overviewBoundary.east), overviewImage.width, overviewImage.height);
+    //overviewImage =  img_lib.drawRect(overviewImage, topLeft.x,topLeft.y,bottomRight.x,bottomRight.y,0x000000FF);
+    //overviewImage = img_lib.drawLine(overviewImage, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y, img_lib.Color.fromRgb(0, 0, 0), thickness: math.max(0.005*math.max(overviewImage.width, overviewImage.height),3));
+
+    final thickness = math.max(0.003*math.max(overviewImage.width, overviewImage.height),3).floor();
+    //overviewBoundary.draw(overviewImage, stretchedBoundary, img_lib.Color.fromRgb(0, 0, 0), thickness);
+    List<int> fontBytes = await File(config.fntFontSource).readAsBytes();
+    final font = img_lib.BitmapFont.fromZip(fontBytes);
+    font.size = 2;
+    final color = img_lib.Color.fromRgb(0, 0, 0);
+
+    for (int x = 0; x<xPages; x++){
+      for (int y = 0; y<yPages; y++){
+        var pageBoundary = overviewBoundary.section(x, xPages, y, yPages);
+        pageBoundary.draw(overviewImage, stretchedBoundary, color, thickness);
+
+        final pageNumber = additionalOffset + config.pageNumberOffset + xPages*y + x + 1;
+        var text = "$pageNumber";
+
+        var i = img_lib.Image(190,160);
+        img_lib.fill(i, img_lib.Color.fromRgb(255, 255, 255));
+        img_lib.drawStringCentered(i, font, text);
+        i = img_lib.copyCrop(i, 0, 40, 190, 100);
+        i = img_lib.copyResize(i, width: thickness*16);
+        var coords = stretchedBoundary.getPixelCoordinates(Coordinates(pageBoundary.north, pageBoundary.west), overviewImage.width, overviewImage.height);
+        img_lib.copyInto(overviewImage, i,dstX: (coords.x+thickness/2).ceil(), dstY: (coords.y + thickness/2).ceil());
+        //img_lib.drawStringCentered(overviewImage, font, "123", color: color, x: coords.x+2*thickness, y: coords.y+2*thickness);
+      }
+    }
+
+    final img = pw.Image(
+      pw.ImageImage(overviewImage),
+      fit: pw.BoxFit.contain,
+      alignment: pw.Alignment.center
+    );
+    return pw.Page(
+      pageFormat: config.paper.pdfFormat,
+      orientation: config.paper.orientation.pdfOrientation,
+      build: (context) => pw.Center(child: img),
+    );
   }
 }
 
