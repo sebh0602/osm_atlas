@@ -6,7 +6,7 @@ import 'package:osm_atlas/pdf_utils.dart';
 
 class AtlasConfiguration{
   //Vienna as default location
-  Boundary boundary = Boundary(48.28, 48.13, 16.50, 16.25);
+  Boundary boundary = Boundary(48.28, 48.13, 16.515, 16.25);
 
   Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait,5,5);
   int pageNumberOffset = 0;
@@ -18,7 +18,7 @@ class AtlasConfiguration{
 
   String title = "Atlas";
   String subtitle = "Sebastian Hietsch / OpenStreetMap (${DateTime.now().year})";
-  String innerText = "This atlas was created using a program written by Sebastian Hietsch.\nThe map data is from OpenStreetmap.\n© ${DateTime.now().year}";
+  String innerText = "";
   bool omitTitlePage = false;
   bool omitInnerPage = false;
   bool addBlankPage = false;

@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import 'package:osm_atlas/atlas_configuration.dart';
 import 'package:osm_atlas/coordinates.dart';
+import 'package:osm_atlas/utils.dart';
 
 class Page{
   final int pageNumber;
@@ -188,9 +189,8 @@ class Page{
   }
 
   String _padNumber(int number, PagePosition pP){
-    final maxLen = (pP.width*pP.height+config.pageNumberOffset+pdf.additionalOffset).toString().length;
-    final ownLen = number.toString().length;
-    return "0"*(maxLen-ownLen) + number.toString();
+    final padLength = (pP.width*pP.height+config.pageNumberOffset+pdf.additionalOffset).toString().length;
+    return padNumber(number, padLength);
   }
 
   static Future<img_lib.Image> createPageImage(Boundary boundary, int zoomLevel, AtlasConfiguration config,{PDFDocument? pdf}) async{
@@ -242,7 +242,7 @@ class PDFDocument{
 
   void addDownloadedTile(){
     _downloadedTiles++;
-    statusUpdate();
+    if (_downloadedTiles % 10 == 0) statusUpdate();
   }
 
   void addPage(pw.Page page, int number){
@@ -262,7 +262,7 @@ class PDFDocument{
     pdf.addPage(await _createOverview());
     if (!config.omitInnerPage) pdf.addPage(_createInnerPage());
 
-    print("Saving pdf...");
+    print("Composing and saving pdf...");
     for (int i = 0; i<documentLength; i++){
       if (pages[i] != null){
         pdf.addPage(pages[i]!);
@@ -315,30 +315,138 @@ class PDFDocument{
   }
 
   pw.Page _createInnerPage(){
+    final date = "${DateTime.now().year}-${padNumber(DateTime.now().month,2)}-${padNumber(DateTime.now().day,2)}";
+    final text = "Base map: ${config.sourceURL}\nOverlay: ${config.overlayURL ?? "none"}\nPage Size: ${config.paper.size.name}\nCreation date: $date\nThis atlas was created using a program written by Sebastian Hietsch.";
+    final pageWidth = (config.paper.printableWidth/10).floor();
+    final ssW = _getScaleSectionWidth();
+    final ssCount = (pageWidth/(ssW*100/config.scale)).floor();
+    final scaleText = "$ssCount × ${formatMeters(ssW)} = ${formatMeters(ssCount*ssW)}";
+
+    final scale = [
+      pw.Positioned(
+        left: 10*Paper.mm,
+        right: 10*Paper.mm,
+        top: 10*Paper.mm,
+        child: pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              "1:${addSeparators(config.scale.toString())}",
+              style: pw.TextStyle(
+                font: config.font,
+                fontSize: 10
+              ),
+              textAlign: pw.TextAlign.left
+            ),
+            pw.Text(
+              "1 cm = ${formatMeters(config.scale/100)}",
+              style: pw.TextStyle(
+                font: config.font,
+                fontSize: 10
+              ),
+              textAlign: pw.TextAlign.right
+            )
+          ]
+        ),
+      ),
+      pw.Positioned(
+        right: 10*Paper.mm,
+        left: 10*Paper.mm,
+        top: 30*Paper.mm,
+        child: pw.Text(
+          scaleText,
+          style: pw.TextStyle(
+            font: config.font,
+            fontSize: 10
+          ),
+          textAlign: pw.TextAlign.center
+        ),
+      ),
+      pw.Positioned(
+        left:0,
+        right: 0,
+        top:20*Paper.mm,
+        child: pw.Center(
+          child: pw.Image(
+            pw.ImageImage(_getScaleImage(ssCount)),
+            width: ssW*ssCount*1000/config.scale*Paper.mm,
+            height: 5*Paper.mm,
+            alignment: pw.Alignment.center
+          )
+        ),
+      )
+    ];
+
+    final bottomText = pw.Positioned(
+      left: 10*Paper.mm,
+      right: 10*Paper.mm,
+      bottom: 10*Paper.mm,
+      child: pw.Column(
+        mainAxisAlignment: pw.MainAxisAlignment.end,
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          pw.Text(
+            config.innerText,
+            style: pw.TextStyle(
+              font: config.font,
+              fontSize: 10
+            ),
+            textAlign: pw.TextAlign.center
+          ),
+          pw.Container(height: 10*Paper.mm),
+          pw.Text(
+            text,
+            style: pw.TextStyle(
+              font: config.font,
+              fontSize: 10
+            ),
+            textAlign: pw.TextAlign.left
+          )
+        ]
+      )  
+    );
+
     return pw.Page(
       pageFormat: config.paper.pdfFormat,
       orientation: config.paper.orientation.pdfOrientation,
       build: (context) {
         return pw.Stack(
           children: [
-            pw.Positioned(
-              left: 20*Paper.mm,
-              right: 20*Paper.mm,
-              bottom: config.paper.height*0.1*Paper.mm,
-              child: pw.Text(
-                config.innerText,
-                style: pw.TextStyle(
-                  font: config.font,
-                  fontSize: 10
-                ),
-                textAlign: pw.TextAlign.center
-              )
-            )
-            //TODO: Add scale, physical scale, cm/m equivalence,
+            ...scale,
+            bottomText
           ]
         );
       },
     );
+  }
+
+  int _getScaleSectionWidth(){
+    var width = 5.0; //meter
+    final factors = [2.0, 2.5, 2.0];
+    var factorIndex = 0;
+    final minSections = 3;
+    while (width*100/config.scale < config.paper.printableWidth/10/minSections){
+      width = width * factors[factorIndex % 3];
+      factorIndex += 1;
+    }
+    factorIndex -= 1;
+    width = width / factors[factorIndex % 3];
+    return width.round();
+  }
+
+  img_lib.Image _getScaleImage(int sectionCount){
+    final black = img_lib.Color.fromRgb(0,0,0);
+    var returnImg = img_lib.Image(1050,20);
+    img_lib.drawRect(returnImg, 0, 0, 1049, 19, black);
+    var blackImg = img_lib.Image(1,18);
+    img_lib.fill(blackImg, black);
+    final sectionWidth = (1050/sectionCount).round();
+    blackImg = img_lib.copyResize(blackImg,height: 18,width:sectionWidth);
+    for (int i = 0; i<sectionCount; i+=2){
+      img_lib.copyInto(returnImg, blackImg,dstY:1,dstX:i*sectionWidth);
+    }
+    return returnImg;
   }
 
   Future<pw.Page> _createOverview() async{
@@ -357,7 +465,7 @@ class PDFDocument{
         pageBoundary.draw(overviewImage, stretchedBoundary, color, thickness);
 
         final pageNumber = additionalOffset + config.pageNumberOffset + xPages*y + x + 1;
-        var text = "$pageNumber";
+        var text = padNumber(pageNumber,(additionalOffset+config.pageNumberOffset+xPages*yPages).toString().length);
 
         var i = img_lib.Image(190,160);
         img_lib.fill(i, img_lib.Color.fromRgb(255, 255, 255));
@@ -498,6 +606,10 @@ enum PaperSize{
     required this.longSide,
     required this.shortSide,
   });
+
+  String get name{
+    return toString().split('.').last.toUpperCase();
+  }
 }
 
 enum PaperOrientation{
