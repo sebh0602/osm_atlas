@@ -24,23 +24,33 @@ class TileProvider{
     final file = File(path);
     if (await file.exists()){
       final bytes = await file.readAsBytes();
-      return Tile(tc,bytes);
+      return Tile(tc,bytes,config);
     } else {
       var tile = await _getNetworkTile(tc,3);
       if (config.overlayURL != null){
         var overlayTile = await _getNetworkTile(tc, 3, getOverlay: true);
-        var baseImg = img_lib.decodePng(tile.bytes);
-        var topImg = img_lib.decodePng(overlayTile.bytes);
+        var baseImg = TileProvider.decodeImg(tile.bytes,config);
+        var topImg = TileProvider.decodeImg(overlayTile.bytes,config);
         if (baseImg == null || topImg == null){
           throw Exception("Images shouldn't be null!");
         }
-        tile = Tile(tc, img_lib.encodePng(img_lib.copyInto(baseImg, topImg)));
+        tile = Tile(tc, img_lib.encodePng(img_lib.copyInto(baseImg, topImg)),config);
       }
       () async {
         await file.create(recursive: true);
         await file.writeAsBytes(tile.bytes);
       }();
       return tile;
+    }
+  }
+
+  static img_lib.Image? decodeImg(List<int> bytes, AtlasConfiguration config){
+    if (config.sourceURL.split(".").last == "png"){
+      return img_lib.decodePng(bytes);
+    } else if (config.sourceURL.split(".").last == "jpg" || config.sourceURL.split(".").last == "jpeg"){
+      return img_lib.decodeJpg(bytes);
+    } else{
+      return img_lib.decodeImage(bytes);
     }
   }
 
@@ -70,7 +80,7 @@ class TileProvider{
       final response = await http.get(url);
       if (response.statusCode == 200){
         final bytes = response.bodyBytes;
-        return Tile(tc, bytes);
+        return Tile(tc, bytes, config);
       } else {
         if (remainingTries == 0){
           throw HttpException("Status code: ${response.statusCode}, header: ${response.headers}, url: $coordinateUrl");
@@ -79,8 +89,10 @@ class TileProvider{
         }
       }
     } catch (e){
+      if (remainingTries == 0){
+        rethrow;
+      }
       return _getNetworkTile(tc, remainingTries);
     }
-    
   }
 }

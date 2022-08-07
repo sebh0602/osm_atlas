@@ -8,7 +8,6 @@ zoomLevel: 15
 overviewZoomLevel: 12
 scale: 15000 #scale: x is a scale of 1/x
 
-
 paper:
   size: a5 #a0-a6
   orientation: portrait #portrait or landscape
@@ -22,13 +21,14 @@ evenLeftNumbering: false
 addBlankPage: true
 omitTitlePage: false
 
-
-
 #Non-retina:
 #sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png #standard tiles
 #sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png #german style
 
 #Retina:
 #sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
-sourceURL: https://tiles.bergfex.at/styles/bergfex-osm/{z}/{x}/{y}@2x.png #bergfex with amenities
-#overlayURL: https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png
+#sourceURL: https://tiles.bergfex.at/styles/bergfex-osm/{z}/{x}/{y}@2x.png #bergfex with amenities
+sourceURL: https://maps1.wien.gv.at/basemap/bmaphidpi/normal/google3857/{z}/{y}/{x}.jpeg
+
+#Overlays:
+#overlayURL: https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png #cycling overlay

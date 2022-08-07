@@ -1,14 +1,18 @@
 import 'package:image/image.dart' as img_lib;
+import 'package:osm_atlas/atlas_configuration.dart';
+
 import 'package:osm_atlas/coordinates.dart';
+import 'package:osm_atlas/tile_provider.dart';
 
 
 class Tile{
   final List<int> bytes;
   final TileCoordinates tileCoordinates;
+  final AtlasConfiguration config;
   img_lib.Image? image;
   
-  Tile(this.tileCoordinates, this.bytes){
-    image = img_lib.decodePng(bytes);
+  Tile(this.tileCoordinates, this.bytes, this.config){
+    image = TileProvider.decodeImg(bytes,config);
     
   }
 }
