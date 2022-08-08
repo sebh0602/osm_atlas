@@ -22,13 +22,37 @@ addBlankPage: true
 omitTitlePage: false
 
 #Non-retina:
+
 #sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png #standard tiles
 #sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png #german style
 
+#---------------
+
 #Retina:
+
 #sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
+#sourceURL: https://a.osm.rrze.fau.de/osmhd/{z}/{x}/{y}.png
+#sourceURL: https://vbb-gis-de-b.haf.as/hafas-tiles/osm/2/{z}/{x}/{y}.png
+
 #sourceURL: https://tiles.bergfex.at/styles/bergfex-osm/{z}/{x}/{y}@2x.png #bergfex with amenities
-sourceURL: https://maps1.wien.gv.at/basemap/bmaphidpi/normal/google3857/{z}/{y}/{x}.jpeg
+#sourceURL: https://maps.bergfex.at/osm/512px/{z}/{x}/{y}.jpg #bergfex with no amenities, no trees, more street names
+#sourceURL: https://maps.bergfex.at/oek/512px/{z}/{x}/{y}.jpg #bergfex oek from bbbcycle
+#sourceURL: https://maps1.wien.gv.at/basemap/bmaphidpi/normal/google3857/{z}/{y}/{x}.jpeg #basemap.at
+#sourceURL: https://bvg-gis-c.hafas.de/hafas-tiles/inno2017/2/{z}/{x}/{y}.png
+#sourceURL: https://tileserver.b10s.net/styles/bc-no-labels/{z}/{x}/{y}@2x.png #bike citizens
+#overlayURL: https://tileserver.b10s.net/styles/bc-just-labels/{z}/{x}/{y}@2x.png
+
+#---------------
+
+#Restricted:
+
+#sourceURL: https://tile.thunderforest.com/landscape/{z}/{x}/{y}@2x.png?apikey={k} #tf "standard"
+sourceURL: https://tile.thunderforest.com/mobile-atlas/{z}/{x}/{y}@2x.png?apikey={k} #mobile atlas
+apiKey: keys/thunderforest
+
+#---------------
 
 #Overlays:
+
 #overlayURL: https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png #cycling overlay
+#overlayURL: https://maps4.wien.gv.at/basemap/bmapoverlay/normal/google3857/{z}/{y}/{x}.png #basemap labels (works poorly)

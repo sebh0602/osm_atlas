@@ -57,6 +57,9 @@ class Page{
       return pw.Container(height: 0, width: 0);
     }
     neighbourNumber += pdf.additionalOffset;
+
+    final borderSide = pw.BorderSide(color: PdfColor.fromHex("FFFFFF"),width: 1*Paper.mm);
+    var border = pw.Border(bottom: borderSide,top: borderSide,left: borderSide,right: borderSide);
     
     var alignment = pw.Alignment.center;
     double? left,right,top,bottom;
@@ -64,18 +67,22 @@ class Page{
       case Direction.left:
         left = 0;
         bottom = 50*Paper.mm;
+        border = pw.Border(bottom: borderSide,top: borderSide,right: borderSide);
         break;
       case Direction.right:
         right = 0;
         top = 50*Paper.mm;
+        border = pw.Border(bottom: borderSide,top: borderSide,left: borderSide);
         break;
       case Direction.top:
         top = 0;
         right = 50*Paper.mm;
+        border = pw.Border(bottom: borderSide,left: borderSide,right: borderSide);
         break;
       case Direction.bottom:
         bottom = 0;
         left = 50*Paper.mm;
+        border = pw.Border(top: borderSide,left: borderSide,right: borderSide);
         break;
     }
     return pw.Positioned(
@@ -89,6 +96,7 @@ class Page{
           decoration: pw.BoxDecoration(
             //color: PdfColor.fromHex("99EEFF"),
             color: PdfColor.fromHex("000000"),
+            border: (config.whiteBorderAroundLinks) ? border : null
           ),
           width: width,
           height: height,

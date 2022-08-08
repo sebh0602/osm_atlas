@@ -22,7 +22,14 @@ void main(List<String> arguments) {
   final configFile = File(configFilePath);
   if (configFile.existsSync()){
     final yamlString = configFile.readAsStringSync();
-    final yamlMap = loadYaml(yamlString);
+    var yamlMap;
+    try{
+      yamlMap = loadYaml(yamlString);
+    } catch (e){
+      print("Error in YAML configuration: ${e.toString().split("\n").first}");
+      return;
+    }
+    
     config.importYamlConfiguration(yamlMap);
   } else{
     if (arguments.length == 1){

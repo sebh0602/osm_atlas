@@ -59,7 +59,8 @@ class TileProvider{
     return baseUrl!
       .replaceFirst("{x}", tc.x.toString())
       .replaceFirst("{y}", tc.y.toString())
-      .replaceFirst("{z}", tc.z.toString());
+      .replaceFirst("{z}", tc.z.toString())
+      .replaceFirst("{k}", config.apiKey ?? "");
   }
 
   String get _urlTimeHashCode{

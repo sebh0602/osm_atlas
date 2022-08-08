@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:pdf/widgets.dart' as pw;
 
 import 'package:osm_atlas/tile_provider.dart';
@@ -14,6 +16,7 @@ class AtlasConfiguration{
   bool dontSwitchPageNumbering = false;
   String fontSource = "fonts/roboto.ttf";
   String fntFontSource = "fonts/roboto.zip";
+  bool whiteBorderAroundLinks = false;
   pw.Font? font;
 
   String title = "Atlas";
@@ -28,6 +31,7 @@ class AtlasConfiguration{
   int scale = 50000;
   String sourceURL = "https://tile.osmand.net/hd/{z}/{x}/{y}.png";
   String? overlayURL;
+  String? apiKey; //can be either the key itself or the path to the key
   String cachePath = "cache";
 
   String outputPath = "output";
@@ -126,6 +130,14 @@ class AtlasConfiguration{
           break;
         case "overlayURL":
           overlayURL = entry.value;
+          break;
+        case "apiKey":
+          final f = File(entry.value);
+          if (f.existsSync()){
+            apiKey = f.readAsStringSync();
+          } else {
+            apiKey = entry.value;
+          }
           break;
         case "cachePath":
           cachePath = entry.value;
