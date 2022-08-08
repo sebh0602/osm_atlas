@@ -164,5 +164,15 @@ class Boundary{
 }
 
 enum Direction{
-  left,right,top,bottom
+  left(true),
+  right(true),
+  top(false),
+  bottom(false);
+
+  final bool horizontal;
+  const Direction(this.horizontal);
+
+  bool get vertical{
+    return !horizontal;
+  }
 }

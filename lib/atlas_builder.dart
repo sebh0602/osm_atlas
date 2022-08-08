@@ -42,8 +42,9 @@ class AtlasBuilder{
     if (config.addBlankPage) additionalOffset++;
     final document = PDFDocument(pdfPages, additionalOffset, _adjustedBoundary!,_xPages!,_yPages!, config);
 
-    final xPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingWidth;
-    final yPageStretch = 1+ 2*config.paper.overlap/config.paper.nonOverlappingHeight;
+    final sizeDiff = 2*config.paper.overlap + 2*((config.paper.coloredMargin) ? config.paper.margin : 0);
+    final xPageStretch = 1+ sizeDiff/config.paper.nonOverlappingWidth;
+    final yPageStretch = 1+ sizeDiff/config.paper.nonOverlappingHeight;
     for (int yPage = 0; yPage<_yPages!; yPage++){
       for (int xPage = 0; xPage<_xPages!; xPage++){
         var pageBoundary = adjustedBoundaryWithoutOverlap.section(xPage, _xPages!, yPage, _yPages!);

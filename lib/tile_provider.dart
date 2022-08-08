@@ -78,7 +78,7 @@ class TileProvider{
     final coordinateUrl = _getRequestUrl(tc, getOverlay:getOverlay);
     final url = Uri.parse(coordinateUrl);
     try{
-      final response = await http.get(url);
+      final response = await http.get(url,headers: {"Referer":"https://example.com/"});
       if (response.statusCode == 200){
         final bytes = response.bodyBytes;
         return Tile(tc, bytes, config);

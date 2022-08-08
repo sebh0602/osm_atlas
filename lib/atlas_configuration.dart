@@ -10,13 +10,14 @@ class AtlasConfiguration{
   //Vienna as default location
   Boundary boundary = Boundary(48.28, 48.13, 16.515, 16.25);
 
-  Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait,5,5);
+  Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait, margin:5, overlap:5);
   int pageNumberOffset = 0;
   bool evenLeftNumbering = false;
-  bool dontSwitchPageNumbering = false;
+  bool dontAlternatePageNumbering = false;
+  bool omitHorizontalLinks = false;
   String fontSource = "fonts/roboto.ttf";
   String fntFontSource = "fonts/roboto.zip";
-  bool whiteBorderAroundLinks = false;
+  bool whiteBorderAroundLinks = false; //page links
   pw.Font? font;
 
   String title = "Atlas";
@@ -72,6 +73,7 @@ class AtlasConfiguration{
           var orientation = paper.orientation;
           var margin = paper.margin;
           var overlap = paper.overlap;
+          var coloredMargin = paper.coloredMargin;
           if (entry.value.keys.contains("size")){
             var s = entry.value["size"];
             switch (s){
@@ -114,7 +116,10 @@ class AtlasConfiguration{
             //externally, overlap is the non-exclusive part of the page.
             //Internally, overlap is added to the page after the fact. To avoid confusion due to overlap being present on both pages, it is halved here.
           }
-          paper = Paper(size, orientation, margin, overlap);
+          if (entry.value.keys.contains("coloredMargin")){
+            coloredMargin = entry.value["coloredMargin"];
+          }
+          paper = Paper(size, orientation, margin:margin, overlap:overlap, coloredMargin: coloredMargin);
           break;
         case "zoomLevel":
           zoomLevel = entry.value;
@@ -151,8 +156,11 @@ class AtlasConfiguration{
         case "evenLeftNumbering":
           evenLeftNumbering = entry.value;
           break;
-        case "dontSwitchPageNumbering":
-          dontSwitchPageNumbering = entry.value;
+        case "dontAlternatePageNumbering":
+          dontAlternatePageNumbering = entry.value;
+          break;
+        case "omitHorizontalLinks":
+          omitHorizontalLinks = entry.value;
           break;
         case "title":
           title = entry.value;

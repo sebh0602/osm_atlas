@@ -28,7 +28,7 @@ class Page{
     );
 
     final page = pw.Page(
-      pageFormat: config.paper.pdfFormat,
+      pageFormat: config.paper.pdfFormat(),
       orientation: config.paper.orientation.pdfOrientation,
       //margin: pw.EdgeInsets.all(config.paper.margin * Paper.mm),
       build:(context) {
@@ -53,7 +53,7 @@ class Page{
     final width = 8*Paper.mm;
     final height = 5*Paper.mm;
     var neighbourNumber = pagePosition.getNeighbour(dir);
-    if (neighbourNumber == null){
+    if (neighbourNumber == null || (config.omitHorizontalLinks && dir.horizontal)){
       return pw.Container(height: 0, width: 0);
     }
     neighbourNumber += pdf.additionalOffset;
@@ -85,6 +85,45 @@ class Page{
         border = pw.Border(top: borderSide,left: borderSide,right: borderSide);
         break;
     }
+
+    final textContainer = pw.Container(
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex("000000"),
+        border: (config.whiteBorderAroundLinks) ? border : null
+      ),
+      width: width,
+      height: height,
+      alignment: alignment,
+      padding: pw.EdgeInsets.zero,
+      margin: pw.EdgeInsets.zero,
+      child: pw.Text(
+        _padNumber(neighbourNumber, pagePosition),
+        tightBounds: true,
+        style: pw.TextStyle(
+          color: PdfColor.fromHex("FFFFFF"),
+          fontSize: 11,
+          font: config.font
+        )
+      )
+    );
+
+    final marginContainer = pw.Container(
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex("000000"),
+        border: (config.whiteBorderAroundLinks) ? border : null
+      ),
+      width: dir.horizontal ? config.paper.margin * Paper.mm : width,
+      height: dir.horizontal ? height : config.paper.margin * Paper.mm,
+    );
+
+    List<pw.Widget> children;
+    if (dir == Direction.left || dir == Direction.top){
+      children = [marginContainer,textContainer];
+    } else{
+      children = [textContainer,marginContainer];
+    }
+    final arrangement = dir.horizontal ? pw.Row(children: children) : pw.Column(children: children);
+
     return pw.Positioned(
       left: left,
       top: top,
@@ -92,33 +131,13 @@ class Page{
       bottom: bottom,
       child: pw.UrlLink(
         destination: "#page=$neighbourNumber",
-        child: pw.Container(
-          decoration: pw.BoxDecoration(
-            //color: PdfColor.fromHex("99EEFF"),
-            color: PdfColor.fromHex("000000"),
-            border: (config.whiteBorderAroundLinks) ? border : null
-          ),
-          width: width,
-          height: height,
-          alignment: alignment,
-          padding: pw.EdgeInsets.zero,
-          margin: pw.EdgeInsets.zero,
-          child: pw.Text(
-            _padNumber(neighbourNumber, pagePosition),
-            tightBounds: true,
-            style: pw.TextStyle(
-              color: PdfColor.fromHex("FFFFFF"),
-              fontSize: 11,
-              font: config.font
-            )
-          )
-        )
+        child: config.paper.coloredMargin ? arrangement : textContainer
       )
     );
   }
 
   Direction get numberingSide{
-    if (config.dontSwitchPageNumbering){
+    if (config.dontAlternatePageNumbering){
       return Direction.right;
     }
     if ((pageNumber + config.pageNumberOffset + pdf.additionalOffset) % 2 == 0){
@@ -155,6 +174,57 @@ class Page{
     final borderRadiusSml = (numberingSide == Direction.left) ? pw.BorderRadius.only(topRight: radiusSml) : pw.BorderRadius.only(topLeft: radiusSml);
     final borderRadiusLrg = (numberingSide == Direction.left) ? pw.BorderRadius.only(topRight: radiusLrg) : pw.BorderRadius.only(topLeft: radiusLrg);
 
+    final roundedContainer = pw.Container(
+      decoration: pw.BoxDecoration(
+        //color: PdfColor.fromHex("99EEFF"),
+        color: PdfColor.fromHex("FFFFFF"),
+        borderRadius: borderRadiusSml
+      ),
+      width: width,
+      height: height,
+      alignment: alignment,
+      padding: pw.EdgeInsets.zero,
+      margin: pw.EdgeInsets.zero,
+      child: pw.Text(
+        _padNumber(pageNumber+config.pageNumberOffset + pdf.additionalOffset, pagePosition),
+        tightBounds: true,
+        style: pw.TextStyle(
+          color: PdfColor.fromHex("000000"),
+          fontSize: 11,
+          font: config.font
+        )
+      )
+    );
+
+    final sideMargin = pw.Container(
+      decoration: pw.BoxDecoration(
+        color: PdfColor.fromHex("FFFFFF"),
+      ),
+      width: config.paper.margin * Paper.mm,
+      height: config.paper.margin * Paper.mm + height
+    );
+
+    final arrangement = pw.Row(
+      children: [
+        if (numberingSide == Direction.left) sideMargin,
+        pw.Column(
+          crossAxisAlignment: (numberingSide == Direction.left) ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+          children: [
+            roundedContainer,
+            pw.Container(
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromHex("FFFFFF"),
+              ),
+              width: width,
+              height: config.paper.margin * Paper.mm
+            )
+          ]
+        ),
+        if (numberingSide == Direction.right) sideMargin,
+      ]
+    );
+
+
     return pw.Positioned(
       left: left,
       right:right,
@@ -167,30 +237,10 @@ class Page{
               color: PdfColor.fromHex("000000"),
               borderRadius: borderRadiusLrg
             ),
-            width: width + borderWidth,
-            height: height + borderWidth
+            width: width + borderWidth + (config.paper.coloredMargin ? config.paper.margin.toDouble() * Paper.mm : 0.0),
+            height: height + borderWidth + (config.paper.coloredMargin ? config.paper.margin.toDouble() * Paper.mm : 0.0)
           ),
-          pw.Container(
-            decoration: pw.BoxDecoration(
-              //color: PdfColor.fromHex("99EEFF"),
-              color: PdfColor.fromHex("FFFFFF"),
-              borderRadius: borderRadiusSml
-            ),
-            width: width,
-            height: height,
-            alignment: alignment,
-            padding: pw.EdgeInsets.zero,
-            margin: pw.EdgeInsets.zero,
-            child: pw.Text(
-              _padNumber(pageNumber+config.pageNumberOffset + pdf.additionalOffset, pagePosition),
-              tightBounds: true,
-              style: pw.TextStyle(
-                color: PdfColor.fromHex("000000"),
-                fontSize: 11,
-                font: config.font
-              )
-            )
-          )
+          config.paper.coloredMargin ? arrangement : roundedContainer
         ]
       )
     );
@@ -266,7 +316,7 @@ class PDFDocument{
   void _createDocument() async{
     print("Creating title and overview...");
     if (!config.omitTitlePage) pdf.addPage(_createTitlePage());
-    if (config.addBlankPage) pdf.addPage(pw.Page(pageFormat: config.paper.pdfFormat, orientation: config.paper.orientation.pdfOrientation, build: (context) => pw.Container(width: 0,height: 0),));
+    if (config.addBlankPage) pdf.addPage(pw.Page(pageFormat: config.paper.pdfFormat(), orientation: config.paper.orientation.pdfOrientation, build: (context) => pw.Container(width: 0,height: 0),));
     pdf.addPage(await _createOverview());
     if (!config.omitInnerPage) pdf.addPage(_createInnerPage());
 
@@ -285,7 +335,7 @@ class PDFDocument{
 
   pw.Page _createTitlePage(){
     return pw.Page(
-      pageFormat: config.paper.pdfFormat,
+      pageFormat: config.paper.pdfFormat(keepMargin: true),
       orientation: config.paper.orientation.pdfOrientation,
       build: (context) {
         return pw.Stack(
@@ -416,7 +466,7 @@ class PDFDocument{
     );
 
     return pw.Page(
-      pageFormat: config.paper.pdfFormat,
+      pageFormat: config.paper.pdfFormat(keepMargin: true),
       orientation: config.paper.orientation.pdfOrientation,
       build: (context) {
         return pw.Stack(
@@ -492,7 +542,7 @@ class PDFDocument{
       alignment: pw.Alignment.center
     );
     return pw.Page(
-      pageFormat: config.paper.pdfFormat,
+      pageFormat: config.paper.pdfFormat(keepMargin: true),
       orientation: config.paper.orientation.pdfOrientation,
       build: (context) => pw.Center(child: img),
     );
@@ -554,9 +604,10 @@ class Paper{
   final PaperSize size;
   final PaperOrientation orientation;
   final int margin, overlap;
+  final bool coloredMargin;
   static final double mm = PdfPageFormat.mm;
 
-  Paper(this.size, this.orientation, this.margin, this.overlap);
+  Paper(this.size, this.orientation, {required this.margin, required this.overlap, this.coloredMargin = false});
 
   int get width{
     if (orientation == PaperOrientation.landscape){
@@ -590,11 +641,12 @@ class Paper{
     return printableHeight - 2*overlap;
   }
 
-  PdfPageFormat get pdfFormat{
+  PdfPageFormat pdfFormat({bool keepMargin = false}){
+    final pMargin = (coloredMargin && !keepMargin) ? 0.0 : margin*mm;
     if (orientation == PaperOrientation.landscape){
-      return PdfPageFormat(size.longSide*mm, size.shortSide*mm, marginAll: margin*mm);
+      return PdfPageFormat(size.longSide*mm, size.shortSide*mm, marginAll: pMargin);
     } else {
-      return PdfPageFormat(size.shortSide*mm, size.longSide*mm, marginAll: margin*mm);
+      return PdfPageFormat(size.shortSide*mm, size.longSide*mm, marginAll: pMargin);
     }
   }
 }
