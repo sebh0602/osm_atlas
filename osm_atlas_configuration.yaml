@@ -1,64 +1,107 @@
---- #Configuration for creating an atlas from OSM data
-boundary:
-  north: 48.27 #degrees latitude
-  south: 48.22
-  east: 16.37 #degrees longitude
-  west: 16.29
-zoomLevel: 15
-overviewZoomLevel: 14
-scale: 15000 #scale: x is a scale of 1/x
+---
+### Atlas Configuration:
+### Configuration for creating an atlas from OSM data.
+
+
+  ## ===============
+  ## Print settings:
+  ## ===============
+
+
+title: Bergen
 
 paper:
-  size: a5 #a0-a6
-  orientation: portrait #portrait or landscape
-  margin: 3 #Empty space at edge of page (in mm)
-  coloredMargin: false
-  overlap: 8 #How much of the edge should be shared with the next page (in mm)
+  size: a5                #a0-a6
+  orientation: portrait   #portrait or landscape
+  margin: 1               #Empty space at edge of page (in mm)
+  coloredMargin: true
+  overlap: 10             #How much of the edge should be shared with the next page (in mm)
 
-title: Wien
+
 pageNumberOffset: 0
 addBlankPage: true
 
 omitHorizontalLinks: false
 
 
-#Non-retina:
+  ## ====================
+  ## Filesystem settings:
+  ## ====================
 
-#sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png #standard tiles
-#sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png #german style
 
-#---------------
+outputPath: output/bergen
+cachePath: cache
 
-#Retina:
+
+  ## ===============
+  ## Map Parameters:
+  ## ===============
+
+
+boundary:
+  #http://bboxfinder.com/ or https://boundingbox.klokantech.com/ (with option CSV) are good tools to find the correct boundary
+  #This specifies the minimum visible area. Due to fixed paper sizes, your actual map will cover a slightly larger area.
+  north: 60.422793  #degrees latitude
+  south: 60.371235
+  east: 5.366894    #degrees longitude
+  west: 5.287701
+
+#You need to find a balance between scale and zoomLevel to manage
+scale: 6000 #scale: x is a scale of 1/x
+zoomLevel: 16 #
+overviewZoomLevel: 14
+
+
+
+  ## ====================
+  ## Map Source Material:
+  ## ====================
+
+
+    # -----------
+    # Non-retina:
+    # -----------
+
+#sourceURL: https://tile.openstreetmap.org/{z}/{x}/{y}.png  #standard tiles
+#sourceURL: https://tile.openstreetmap.de/{z}/{x}/{y}.png   #german style
+
+    # -------
+    # Retina:
+    # -------
 
 #sourceURL: https://tile.osmand.net/hd/{z}/{x}/{y}.png
 #sourceURL: https://a.osm.rrze.fau.de/osmhd/{z}/{x}/{y}.png
 #sourceURL: https://vbb-gis-de-b.haf.as/hafas-tiles/osm/2/{z}/{x}/{y}.png
 
-sourceURL: http://cdn.lima-labs.com/{z}/{x}/{y}.png?api=demo #german style
+#sourceURL: http://cdn.lima-labs.com/{z}/{x}/{y}.png?api=demo                             #german style, english text
 
-#sourceURL: https://tiles.bergfex.at/styles/bergfex-osm/{z}/{x}/{y}@2x.png #bergfex with amenities
-#sourceURL: https://maps.bergfex.at/osm/512px/{z}/{x}/{y}.jpg #bergfex with no amenities, no trees, more street names
-#sourceURL: https://maps.bergfex.at/oek/512px/{z}/{x}/{y}.jpg #bergfex oek from bbbcycle
+sourceURL: https://tiles.bergfex.at/styles/bergfex-osm/{z}/{x}/{y}@2x.png                #bergfex with amenities
+#sourceURL: https://maps.bergfex.at/osm/512px/{z}/{x}/{y}.jpg                             #bergfex with no amenities, no trees, more street names
+#sourceURL: https://maps.bergfex.at/oek/512px/{z}/{x}/{y}.jpg                             #bergfex oek from bbbcycle
 #sourceURL: https://maps1.wien.gv.at/basemap/bmaphidpi/normal/google3857/{z}/{y}/{x}.jpeg #basemap.at
 #sourceURL: https://bvg-gis-c.hafas.de/hafas-tiles/inno2017/2/{z}/{x}/{y}.png
-#sourceURL: https://tileserver.b10s.net/styles/bc-no-labels/{z}/{x}/{y}@2x.png #bike citizens
+#sourceURL: https://tileserver.b10s.net/styles/bc-no-labels/{z}/{x}/{y}@2x.png            #bike citizens
 #overlayURL: https://tileserver.b10s.net/styles/bc-just-labels/{z}/{x}/{y}@2x.png
 
-#---------------
+    # Restricted (also retina):
+    # -------------------------
 
-#Restricted:
-
-#sourceURL: https://tile.thunderforest.com/landscape/{z}/{x}/{y}@2x.png?apikey={k} #tf "standard"
-#sourceURL: https://tile.thunderforest.com/mobile-atlas/{z}/{x}/{y}@2x.png?apikey={k} #mobile atlas
+#sourceURL: https://tile.thunderforest.com/landscape/{z}/{x}/{y}@2x.png?apikey={k}        #tf "standard"
+#sourceURL: https://tile.thunderforest.com/mobile-atlas/{z}/{x}/{y}@2x.png?apikey={k}     #mobile atlas (beautiful but featureless)
 #apiKey: keys/thunderforest
 
-#sourceURL: https://maps.geoapify.com/v1/tile/toner/{z}/{x}/{y}@2x.png?&apiKey={k} #toner
+#sourceURL: https://maps.geoapify.com/v1/tile/toner/{z}/{x}/{y}@2x.png?&apiKey={k}        #toner
 #apiKey: keys/geoapify
 
-#---------------
+#sourceURL: https://api.maptiler.com/maps/openstreetmap/{z}/{x}/{y}@2x.jpg?key={k} #maptiler standard
+#sourceURL: https://api.maptiler.com/maps/streets/{z}/{x}/{y}@2x.png?key={k} #maptiler streets
+#sourceURL: https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}@2x.png?key={k} #maptiler basic
+#sourceURL: https://api.maptiler.com/maps/topographique/{z}/{x}/{y}@2x.png?key={k} #maptiler topographic
+#apiKey: keys/maptiler
 
-#Overlays:
+    # Overlays:
+    # ---------
+    # These can be added on top of any map
 
 #overlayURL: https://tile.waymarkedtrails.org/cycling/{z}/{x}/{y}.png #cycling overlay
 #overlayURL: https://maps4.wien.gv.at/basemap/bmapoverlay/normal/google3857/{z}/{y}/{x}.png #basemap labels (works poorly)

@@ -22,6 +22,13 @@ class AtlasBuilder{
     _xPages = ((config.mapWidth-2*config.paper.overlap)/config.paper.nonOverlappingWidth).ceil();
     _yPages = ((config.mapHeight-2*config.paper.overlap)/config.paper.nonOverlappingHeight).ceil();
 
+    if (_xPages! * _yPages! > 200){
+      print("WARNING: Your document will be ${_xPages! * _yPages!} pages long. Continue? (y/n)");
+      if (stdin.readLineSync() != "y"){
+        return;
+      }
+    }
+
     _adjustedMapWidth = _xPages! * config.paper.nonOverlappingWidth + 2*config.paper.overlap;
     _adjustedMapHeight = _yPages! * config.paper.nonOverlappingHeight + 2*config.paper.overlap;
 

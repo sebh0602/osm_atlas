@@ -38,7 +38,7 @@ String formatMeters(num meters){
   var suffix = " m";
   if (meters >= 10000){
     suffix = " km";
-    meters = meters/10;
+    meters = meters/1000;
   }
   return addSeparators(meters.round().toString()) + suffix;
 

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img_lib;
@@ -45,9 +44,9 @@ class TileProvider{
   }
 
   static img_lib.Image? decodeImg(List<int> bytes, AtlasConfiguration config){
-    if (config.sourceURL.split(".").last == "png"){
+    if (config.fileType == "png"){
       return img_lib.decodePng(bytes);
-    } else if (config.sourceURL.split(".").last == "jpg" || config.sourceURL.split(".").last == "jpeg"){
+    } else if (config.fileType == "jpg" || config.fileType == "jpeg"){
       return img_lib.decodeJpg(bytes);
     } else{
       return img_lib.decodeImage(bytes);
@@ -70,7 +69,7 @@ class TileProvider{
   }
 
   String _getTilePath(TileCoordinates tc){
-    return "${config.cachePath}/$_urlTimeHashCode-${tc.z}-${tc.x}-${tc.y}.png";
+    return "${config.cachePath}/$_urlTimeHashCode-${tc.z}-${tc.x}-${tc.y}.${config.fileType}";
   }
 
   Future<Tile> _getNetworkTile(TileCoordinates tc,int remainingTries,{bool getOverlay = false}) async {

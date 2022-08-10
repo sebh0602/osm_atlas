@@ -374,7 +374,7 @@ class PDFDocument{
 
   pw.Page _createInnerPage(){
     final date = "${DateTime.now().year}-${padNumber(DateTime.now().month,2)}-${padNumber(DateTime.now().day,2)}";
-    final text = "Base map: ${config.sourceURL}\nOverlay: ${config.overlayURL ?? "none"}\nPage Size: ${config.paper.size.name}\nCreation date: $date\nThis atlas was created using a program written by Sebastian Hietsch.";
+    final text = "Base map: ${config.sourceURL}\nOverlay: ${config.overlayURL ?? "none"}\nZoom level: ${config.zoomLevel}\nPage Size: ${config.paper.size.name}\nCreation date: $date\nThis atlas was created using a program written by Sebastian Hietsch.";
     final pageWidth = (config.paper.printableWidth/10).floor();
     final ssW = _getScaleSectionWidth();
     final ssCount = (pageWidth/(ssW*100/config.scale)).floor();

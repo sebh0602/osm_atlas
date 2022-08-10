@@ -22,7 +22,7 @@ class AtlasConfiguration{
 
   String title = "Atlas";
   String subtitle = "Sebastian Hietsch / OpenStreetMap (${DateTime.now().year})";
-  String innerText = "";
+  String innerText = "Map data from OpenStreetMap.\nopenstreetmap.org/copyright";
   bool omitTitlePage = false;
   bool omitInnerPage = false;
   bool addBlankPage = false;
@@ -55,6 +55,10 @@ class AtlasConfiguration{
 
   double get mapHeight{ //in mm
     return boundary.height/scale*1000;
+  }
+
+  String get fileType{
+    return sourceURL.split(".").last.split("?").first;
   }
 
   void importYamlConfiguration(dynamic yamlMap){

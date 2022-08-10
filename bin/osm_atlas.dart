@@ -22,7 +22,7 @@ void main(List<String> arguments) {
   final configFile = File(configFilePath);
   if (configFile.existsSync()){
     final yamlString = configFile.readAsStringSync();
-    var yamlMap;
+    dynamic yamlMap;
     try{
       yamlMap = loadYaml(yamlString);
     } catch (e){
