@@ -10,7 +10,8 @@ class AtlasConfiguration{
   //Vienna as default location
   Boundary boundary = Boundary(48.28, 48.13, 16.515, 16.25);
 
-  Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait, margin:5, overlap:5);
+  Paper paper = Paper(PaperSize.a4, PaperOrientation.portrait, margin:5, overlap:10);
+  int textInset = 10; //distance between text/scale and margin in mm.
   int pageNumberOffset = 0;
   bool evenLeftNumbering = false;
   bool dontAlternatePageNumbering = false;

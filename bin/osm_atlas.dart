@@ -32,11 +32,10 @@ void main(List<String> arguments) {
     
     config.importYamlConfiguration(yamlMap);
   } else{
-    if (arguments.length == 1){
-      print("File not found!\n");
-      printUsage();
-      return;
-    }
+    print("Config file not found!");
+    print("($configFilePath)\n");
+    printUsage();
+    return;
   }
 
   AtlasBuilder(config).build();

@@ -138,7 +138,7 @@ class Page{
 
   Direction get numberingSide{
     if (config.dontAlternatePageNumbering){
-      return Direction.right;
+      return (config.evenLeftNumbering) ? Direction.left : Direction.right;
     }
     if ((pageNumber + config.pageNumberOffset + pdf.additionalOffset) % 2 == 0){
       if (config.evenLeftNumbering){
@@ -341,8 +341,8 @@ class PDFDocument{
         return pw.Stack(
           children: [
             pw.Positioned(
-              left: 10*Paper.mm,
-              right: 10*Paper.mm,
+              left: config.textInset*Paper.mm,
+              right: config.textInset*Paper.mm,
               top: config.paper.height*0.3*Paper.mm,
               child: pw.Text(
                 config.title,
@@ -354,9 +354,9 @@ class PDFDocument{
               )
             ),
             pw.Positioned(
-              left: 10*Paper.mm,
-              right: 10*Paper.mm,
-              bottom: 10*Paper.mm,
+              left: config.textInset*Paper.mm,
+              right: config.textInset*Paper.mm,
+              bottom: config.textInset*Paper.mm,
               child: pw.Text(
                 config.subtitle,
                 style: pw.TextStyle(
@@ -375,22 +375,22 @@ class PDFDocument{
   pw.Page _createInnerPage(){
     final date = "${DateTime.now().year}-${padNumber(DateTime.now().month,2)}-${padNumber(DateTime.now().day,2)}";
     final text = "Base map: ${config.sourceURL}\nOverlay: ${config.overlayURL ?? "none"}\nZoom level: ${config.zoomLevel}\nPage Size: ${config.paper.size.name}\nCreation date: $date\nThis atlas was created using a program written by Sebastian Hietsch.";
-    final pageWidth = (config.paper.printableWidth/10).floor();
+    final pageWidth = (config.paper.printableWidth/10 - 2*config.textInset/10).floor(); //in cm
     final ssW = _getScaleSectionWidth();
     final ssCount = (pageWidth/(ssW*100/config.scale)).floor();
     final scaleText = "$ssCount × ${formatMeters(ssW)} = ${formatMeters(ssCount*ssW)}";
 
     final scale = [
       pw.Positioned(
-        left: 10*Paper.mm,
-        right: 10*Paper.mm,
-        top: 10*Paper.mm,
+        left: config.textInset*Paper.mm,
+        right: config.textInset*Paper.mm,
+        top: config.textInset*Paper.mm,
         child: pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             pw.Text(
-              "1:${addSeparators(config.scale.toString())}",
+              "1 : ${addSeparators(config.scale.toString())}",
               style: pw.TextStyle(
                 font: config.font,
                 fontSize: 10
@@ -409,9 +409,9 @@ class PDFDocument{
         ),
       ),
       pw.Positioned(
-        right: 10*Paper.mm,
-        left: 10*Paper.mm,
-        top: 30*Paper.mm,
+        right: config.textInset*Paper.mm,
+        left: config.textInset*Paper.mm,
+        top: (config.textInset + 20)*Paper.mm,
         child: pw.Text(
           scaleText,
           style: pw.TextStyle(
@@ -424,7 +424,7 @@ class PDFDocument{
       pw.Positioned(
         left:0,
         right: 0,
-        top:20*Paper.mm,
+        top:(config.textInset + 10)*Paper.mm,
         child: pw.Center(
           child: pw.Image(
             pw.ImageImage(_getScaleImage(ssCount)),
@@ -437,9 +437,9 @@ class PDFDocument{
     ];
 
     final bottomText = pw.Positioned(
-      left: 10*Paper.mm,
-      right: 10*Paper.mm,
-      bottom: 10*Paper.mm,
+      left: config.textInset*Paper.mm,
+      right: config.textInset*Paper.mm,
+      bottom: config.textInset*Paper.mm,
       child: pw.Column(
         mainAxisAlignment: pw.MainAxisAlignment.end,
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
@@ -484,7 +484,7 @@ class PDFDocument{
     final factors = [2.0, 2.5, 2.0];
     var factorIndex = 0;
     final minSections = 3;
-    while (width*100/config.scale < config.paper.printableWidth/10/minSections){
+    while (width*100/config.scale < (config.paper.printableWidth/10 - 2*config.textInset/10) / minSections){ //comparison in cm
       width = width * factors[factorIndex % 3];
       factorIndex += 1;
     }

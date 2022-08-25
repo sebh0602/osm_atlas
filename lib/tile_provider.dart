@@ -23,6 +23,9 @@ class TileProvider{
     final file = File(path);
     if (await file.exists()){
       final bytes = await file.readAsBytes();
+      if (bytes.length < 100){
+        throw Exception("Cached data too small ($path).");
+      }
       return Tile(tc,bytes,config);
     } else {
       var tile = await _getNetworkTile(tc,3);
@@ -80,6 +83,9 @@ class TileProvider{
       final response = await http.get(url,headers: {"Referer":"https://example.com/"});
       if (response.statusCode == 200){
         final bytes = response.bodyBytes;
+        if (bytes.length < 100){
+          throw Exception("Received data too small (${_getRequestUrl(tc, getOverlay:getOverlay)}).");
+        }
         return Tile(tc, bytes, config);
       } else {
         if (remainingTries == 0){

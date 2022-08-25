@@ -1,2 +1,2 @@
-A sample command-line application with an entrypoint in `bin/`, library code
-in `lib/`, and example unit test in `test/`.
+A simple command line application for creating atlases based on OpenStreetMap.
+To run, put `bin/osm_atlas.exe` and `osm_atlas_configuration.yaml` in the same directory, edit the `.yaml` file to your preferences and run the `.exe`.
